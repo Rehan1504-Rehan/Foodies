@@ -1,7 +1,8 @@
 """Authentication, profile and address forms for FOODIES."""
 
 from django import forms
-from django.contrib.auth import get_user_model
+from django.conf import settings
+from django.contrib.auth import authenticate, get_user_model
 from django.contrib.auth.forms import AuthenticationForm, UserCreationForm
 from django.core.exceptions import ValidationError
 
@@ -39,6 +40,74 @@ class FoodieAuthenticationForm(AuthenticationForm):
         **AuthenticationForm.error_messages,
         "invalid_login": "Incorrect email or password. Please try again.",
     }
+
+
+class AdminAuthenticationForm(forms.Form):
+    """Authentication form for the friendly ``/admin/`` entry point.
+
+    The application uses email as its model-level username, but the requested
+    admin login uses the simpler user ID ``ADMIN``.  It is translated to the
+    canonical admin email before Django's normal authentication backend runs.
+    """
+
+    user_id = forms.CharField(
+        label="User ID",
+        max_length=150,
+        widget=forms.TextInput(
+            attrs={
+                "class": "form-control form-control-lg",
+                "placeholder": "ADMIN",
+                "autocomplete": "username",
+                "autofocus": True,
+            }
+        ),
+    )
+    password = forms.CharField(
+        label="Password",
+        strip=False,
+        widget=forms.PasswordInput(
+            attrs={
+                "class": "form-control form-control-lg",
+                "placeholder": "Enter your password",
+                "autocomplete": "current-password",
+            }
+        ),
+    )
+
+    def __init__(self, request=None, *args, **kwargs):
+        self.request = request
+        self.user_cache = None
+        super().__init__(*args, **kwargs)
+
+    def clean(self):
+        cleaned_data = super().clean()
+        user_id = (cleaned_data.get("user_id") or "").strip()
+        password = cleaned_data.get("password")
+        if not user_id or not password:
+            return cleaned_data
+
+        admin_id = getattr(settings, "ADMIN_LOGIN_ID", "ADMIN")
+        identifier = getattr(settings, "ADMIN_LOGIN_EMAIL", "admin@foodies.test")
+        if user_id.casefold() != admin_id.casefold():
+            # Also accept the canonical email for operators who already used
+            # the old email-based login, while keeping ADMIN as the primary ID.
+            identifier = user_id.lower()
+
+        self.user_cache = authenticate(
+            self.request,
+            username=identifier,
+            password=password,
+        )
+        if self.user_cache is None:
+            raise ValidationError("Incorrect admin user ID or password.")
+        if not self.user_cache.is_active:
+            raise ValidationError("This admin account is inactive.")
+        if not self.user_cache.is_admin_role:
+            raise ValidationError("This account does not have admin access.")
+        return cleaned_data
+
+    def get_user(self):
+        return self.user_cache
 
 
 class BaseRegisterForm(UserCreationForm):

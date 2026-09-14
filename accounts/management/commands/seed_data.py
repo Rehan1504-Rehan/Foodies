@@ -33,7 +33,7 @@ from reviews.models import Review
 SEED_IMAGE_DIR = Path(settings.BASE_DIR) / "static" / "images" / "seed"
 
 PASSWORD = "Foodies@123"
-ADMIN_PASSWORD = "Admin@12345"
+ADMIN_PASSWORD = getattr(settings, "ADMIN_LOGIN_PASSWORD", "Password@123")
 
 CATEGORIES = [
     ("Pizza", "🍕", "Cheesy, wood-fired and loaded with toppings"),
@@ -248,7 +248,7 @@ class Command(BaseCommand):
         self.stdout.write(self.style.SUCCESS("FOODIES demo data is ready! 🍔"))
         self.stdout.write("")
         self.stdout.write(self.style.MIGRATE_HEADING("Login credentials"))
-        self.stdout.write("  Admin            admin@foodies.test   / Admin@12345")
+        self.stdout.write("  Admin            ADMIN               / Password@123")
         self.stdout.write("  Customer         rahul@foodies.test   / Foodies@123")
         self.stdout.write("  Restaurant owner owner@foodies.test   / Foodies@123")
         self.stdout.write("  Delivery partner rider@foodies.test   / Foodies@123")
@@ -288,9 +288,21 @@ class Command(BaseCommand):
         admin = User.objects.filter(email="admin@foodies.test").first()
         if not admin:
             admin = User.objects.create_superuser(
-                email="admin@foodies.test", password=ADMIN_PASSWORD, first_name="Aarav", last_name="Boss",
+                email="admin@foodies.test", password=ADMIN_PASSWORD, first_name="Admin", last_name="User",
                 phone="9000000000", role="ADMIN",
             )
+        else:
+            # Keep the documented ADMIN credentials usable after a demo reset
+            # or when an older seed created this account with a previous pass.
+            admin.first_name = "Admin"
+            admin.last_name = "User"
+            admin.role = "ADMIN"
+            admin.is_active = True
+            admin.is_staff = True
+            admin.is_superuser = True
+            admin.email_verified = True
+            admin.set_password(ADMIN_PASSWORD)
+            admin.save()
         return admin
 
     def _seed_customers(self):

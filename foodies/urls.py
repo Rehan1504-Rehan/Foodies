@@ -3,6 +3,7 @@
 ``/``                        public customer website (namespace: core)
 ``/accounts/``               authentication, profiles, addresses
 ``/restaurants/ /cart/ ...``  customer modules
+``/admin/``                 admin login (user ID: ADMIN)
 ``/admin-dashboard/``        custom FOODIES admin interface
 ``/restaurant-dashboard/``   restaurant owner interface
 ``/delivery/``               delivery partner interface
@@ -34,6 +35,9 @@ urlpatterns = [
     path("", include("dashboard.urls")),
 
     # -------------------------------------------------------------- admin
+    # Friendly admin login at /admin/; Django's model admin stays isolated at
+    # /django-admin/ so the two interfaces do not shadow each other.
+    path("admin/", include("accounts.admin_urls")),
     path("django-admin/", admin.site.urls),
     path("api/", include("foodies.api_urls")),
 ]

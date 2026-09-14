@@ -58,9 +58,9 @@ Open <http://127.0.0.1:8000/> — you are on the FOODIES homepage.
 
 ### Demo logins created by `seed_data`
 
-| Role | Email | Password |
+| Role | User ID / Email | Password |
 |---|---|---|
-| Admin | `admin@foodies.test` | `Admin@12345` |
+| Admin | `ADMIN` at `/admin/` | `Password@123` |
 | Customer | `rahul@foodies.test` | `Foodies@123` |
 | Restaurant owner | `owner@foodies.test` | `Foodies@123` |
 | Delivery partner | `rider@foodies.test` | `Foodies@123` |
@@ -80,6 +80,7 @@ Open <http://127.0.0.1:8000/> — you are on the FOODIES homepage.
 /orders/                Order history, detail, tracking, invoice
 /reviews/               Write / manage reviews
 /accounts/              Login, register (customer/owner/partner), profile, addresses, notifications
+/admin/                 Admin login (ADMIN / Password@123)
 /admin-dashboard/       FOODIES admin console
 /restaurant-dashboard/  Restaurant owner console
 /delivery/              Delivery partner app
@@ -126,6 +127,7 @@ production). Nothing is hard-coded.
 | `PAYMENTS_MOCK_MODE` | `True` → built-in mock gateway (no real money) |
 | `TAX_RATE`, `PLATFORM_FEE`, `DEFAULT_DELIVERY_FEE`, `FREE_DELIVERY_ABOVE`, `RESTAURANT_COMMISSION_RATE`, `DEFAULT_DELIVERY_EARNING` | Business rules |
 | `EMAIL_*` | SMTP for notifications/password reset |
+| `ADMIN_LOGIN_ID`, `ADMIN_LOGIN_PASSWORD` | Optional admin login overrides (default: `ADMIN` / `Password@123`) |
 | `SEED_DATA` | Set `True` on a deploy to load demo data |
 
 ---
