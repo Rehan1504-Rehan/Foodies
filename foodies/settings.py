@@ -143,6 +143,12 @@ LOGIN_URL = "accounts:login"
 LOGIN_REDIRECT_URL = "dashboard:redirect"
 LOGOUT_REDIRECT_URL = "core:home"
 
+# Dedicated admin entry point.  The password can be overridden in production;
+# the requested development/default credentials are ADMIN / Password@123.
+ADMIN_LOGIN_ID = os.environ.get("ADMIN_LOGIN_ID", "ADMIN")
+ADMIN_LOGIN_EMAIL = "admin@foodies.test"
+ADMIN_LOGIN_PASSWORD = os.environ.get("ADMIN_LOGIN_PASSWORD", "Password@123")
+
 # --------------------------------------------------------------------------- #
 # Sessions / security
 # --------------------------------------------------------------------------- #
