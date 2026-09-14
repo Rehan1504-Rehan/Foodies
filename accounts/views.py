@@ -4,7 +4,7 @@ from django.contrib import messages
 from django.contrib.auth import get_user_model, login, update_session_auth_hash
 from django.contrib.auth.decorators import login_required
 from django.contrib.auth.forms import PasswordChangeForm
-from django.contrib.auth.views import FormView, LoginView, LogoutView
+from django.contrib.auth.views import LoginView, LogoutView
 from django.db import transaction
 from django.http import JsonResponse
 from django.shortcuts import get_object_or_404, redirect, render
@@ -30,32 +30,6 @@ User = get_user_model()
 # --------------------------------------------------------------------------- #
 # Authentication
 # --------------------------------------------------------------------------- #
-class AdminLoginView(FormView):
-    """Dedicated admin sign-in at ``/admin/``.
-
-    Admin users land in the existing FOODIES admin console after a successful
-    login.  The canonical account is provisioned by the accounts data
-    migration, while the form accepts ``ADMIN`` as its user ID.
-    """
-
-    template_name = "registration/admin_login.html"
-    form_class = AdminAuthenticationForm
-
-    def dispatch(self, request, *args, **kwargs):
-        if request.user.is_authenticated and request.user.is_admin_role:
-            return redirect("dashboard:admin_home")
-        return super().dispatch(request, *args, **kwargs)
-
-    def get_form_kwargs(self):
-        kwargs = super().get_form_kwargs()
-        kwargs["request"] = self.request
-        return kwargs
-
-    def form_valid(self, form):
-        login(self.request, form.get_user())
-        return redirect("dashboard:admin_home")
-
-
 class FoodieLoginView(LoginView):
     template_name = "registration/login.html"
     authentication_form = FoodieAuthenticationForm

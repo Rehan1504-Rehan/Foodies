@@ -1,5 +1,6 @@
 """Every page of every interface must render with real data (no 500s)."""
 
+from django.contrib.auth import get_user_model
 from django.test import Client, TestCase
 
 from orders.models import Order, OrderStatus
@@ -16,6 +17,8 @@ from tests.conftest import (
     make_owner,
     make_rider,
 )
+
+User = get_user_model()
 
 
 class PageSmokeTests(TestCase):
@@ -191,9 +194,18 @@ class PageSmokeTests(TestCase):
         """The custom FOODIES console must not shadow Django's admin templates."""
         client = Client()
         client.force_login(self.admin)
-        body = client.get("/django-admin/").content.decode()
+        body = client.get("/admin/").content.decode()
         self.assertIn("Site administration", body)
         self.assertNotIn("fd-shell", body)
+
+    def test_legacy_django_admin_alias_redirects_to_admin(self):
+        admin_user = User.objects.get(email="admin@foodies.test")
+        client = Client()
+        client.force_login(admin_user)
+
+        response = client.get("/django-admin/accounts/user/")
+
+        self.assertRedirects(response, "/admin/accounts/user/")
 
     def test_error_pages_render(self):
         self.assertEqual(Client().get("/definitely-not-a-real-page/").status_code, 404)

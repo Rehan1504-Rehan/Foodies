@@ -143,8 +143,9 @@ LOGIN_URL = "accounts:login"
 LOGIN_REDIRECT_URL = "dashboard:redirect"
 LOGOUT_REDIRECT_URL = "core:home"
 
-# Dedicated admin entry point.  The password can be overridden in production;
-# the requested development/default credentials are ADMIN / Password@123.
+# Credentials for the canonical admin account created by the accounts data
+# migration.  Django's built-in admin at /admin/ accepts ADMIN as a user ID
+# alias for the admin e-mail below; override the password in production.
 ADMIN_LOGIN_ID = os.environ.get("ADMIN_LOGIN_ID", "ADMIN")
 ADMIN_LOGIN_EMAIL = "admin@foodies.test"
 ADMIN_LOGIN_PASSWORD = os.environ.get("ADMIN_LOGIN_PASSWORD", "Password@123")

@@ -23,7 +23,7 @@ Django + DRF backend and one relational database.
 | **Delivery partner app** | Online/offline toggle, today's/completed/pending deliveries, available deliveries feed with one-tap claim, assigned job detail with address + distance, status updates (Accepted → Picked Up → Out for Delivery → Delivered), earnings (today/week/month/total) and payout history, vehicle profile |
 | **Admin console** | Totals + charts (daily orders, weekly/monthly revenue, top restaurants, popular food), customer / owner / partner management with block & unblock, restaurant approvals, categories & food catalogue, order monitoring, delivery assignment, payments, coupons, reviews, reports, settings |
 | **Security** | Email-based custom user, hashed passwords, role decorators + DRF permission classes, object-level scoping (no cross-customer / cross-restaurant / cross-partner data), CSRF everywhere, validated uploads, server-side pricing, env-var secrets |
-| **Platform** | PostgreSQL in production / SQLite locally, WhiteNoise static serving, media uploads, REST API at `/api/`, Django admin at `/django-admin/`, `seed_data` demo dataset, branded 400/403/404/500 pages |
+| **Platform** | PostgreSQL in production / SQLite locally, WhiteNoise static serving, media uploads, REST API at `/api/`, Django admin at `/admin/`, `seed_data` demo dataset, branded 400/403/404/500 pages |
 
 ---
 
@@ -80,12 +80,12 @@ Open <http://127.0.0.1:8000/> — you are on the FOODIES homepage.
 /orders/                Order history, detail, tracking, invoice
 /reviews/               Write / manage reviews
 /accounts/              Login, register (customer/owner/partner), profile, addresses, notifications
-/admin/                 Admin login (ADMIN / Password@123)
+/admin/                 Django's built-in admin (login: ADMIN / Password@123)
 /admin-dashboard/       FOODIES admin console
 /restaurant-dashboard/  Restaurant owner console
 /delivery/              Delivery partner app
 /customer/              Customer dashboard (post-login landing)
-/django-admin/          Django's built-in admin
+/django-admin/          Legacy alias — redirects to /admin/
 /api/                   REST API (browsable)
 /healthz/               Health check for Render/Railway
 ```

@@ -3,18 +3,28 @@
 ``/``                        public customer website (namespace: core)
 ``/accounts/``               authentication, profiles, addresses
 ``/restaurants/ /cart/ ...``  customer modules
-``/admin/``                 admin login (user ID: ADMIN)
-``/admin-dashboard/``        custom FOODIES admin interface
+``/admin/``                  Django's built-in admin (login: ADMIN)
+``/admin-dashboard/``        custom FOODIES admin console
 ``/restaurant-dashboard/``   restaurant owner interface
 ``/delivery/``               delivery partner interface
 ``/api/``                    Django REST Framework API
-``/django-admin/``           Django's built-in admin (model level operations)
+``/django-admin/``           backward-compatible redirect to ``/admin/``
 """
 
 from django.conf import settings
 from django.conf.urls.static import static
 from django.contrib import admin
-from django.urls import include, path
+from django.urls import include, path, re_path
+from django.views.generic import RedirectView
+
+from accounts.forms import AdminAuthenticationForm
+
+# The FOODIES user model signs in with e-mail addresses; let operators type
+# the friendly ADMIN user ID on the login form as an alias for the canonical
+# admin account (see ADMIN_LOGIN_* in settings.py).  Everything else about
+# /admin/ is stock Django admin: admin.site.urls, admin/login.html and the
+# normal staff permission checks.
+admin.site.login_form = AdminAuthenticationForm
 
 urlpatterns = [
     # ---------------------------------------------------------------- core
@@ -35,10 +45,17 @@ urlpatterns = [
     path("", include("dashboard.urls")),
 
     # -------------------------------------------------------------- admin
-    # Friendly admin login at /admin/; Django's model admin stays isolated at
-    # /django-admin/ so the two interfaces do not shadow each other.
-    path("admin/", include("accounts.admin_urls")),
-    path("django-admin/", admin.site.urls),
+    # Django's built-in admin with its standard login UI at /admin/.
+    path("admin/", admin.site.urls),
+    # Backward-compatible alias for the previous /django-admin/ location.
+    # Including admin.site.urls twice would duplicate the "admin" URL
+    # namespace (system check urls.W005), so the legacy path redirects
+    # instead — keeping any sub-path and query string intact.
+    re_path(
+        r"^django-admin/(?P<rest>.*)$",
+        RedirectView.as_view(url="/admin/%(rest)s", query_string=True),
+        name="django_admin_alias",
+    ),
     path("api/", include("foodies.api_urls")),
 ]
 
