@@ -50,7 +50,7 @@
     <div class="fd-side-group">
       <div class="fd-side-group-title">System</div>
       <a class="fd-side-link {% if request.resolver_match.url_name == 'admin_settings' %}active{% endif %}" href="{% url 'dashboard:admin_settings' %}"><i class="bi bi-sliders"></i>Settings</a>
-      <a class="fd-side-link" href="/django-admin/"><i class="bi bi-database"></i>Django admin</a>
+      <a class="fd-side-link" href="/admin/"><i class="bi bi-database"></i>Django admin</a>
       <a class="fd-side-link" href="{% url 'core:home' %}"><i class="bi bi-box-arrow-up-right"></i>View website</a>
       <form method="post" action="{% url 'accounts:logout' %}">
         {% csrf_token %}
@@ -76,7 +76,7 @@
         <ul class="dropdown-menu dropdown-menu-end border-0 shadow-card rounded-xl">
           <li><a class="dropdown-item" href="{% url 'accounts:profile' %}"><i class="bi bi-person me-2"></i>My profile</a></li>
           <li><a class="dropdown-item" href="{% url 'accounts:notifications' %}"><i class="bi bi-bell me-2"></i>Notifications</a></li>
-          <li><a class="dropdown-item" href="/django-admin/"><i class="bi bi-database me-2"></i>Django admin</a></li>
+          <li><a class="dropdown-item" href="/admin/"><i class="bi bi-database me-2"></i>Django admin</a></li>
           <li>
             <form method="post" action="{% url 'accounts:logout' %}">
               {% csrf_token %}

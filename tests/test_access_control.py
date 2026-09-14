@@ -103,12 +103,14 @@ class CrossRoleDashboardTests(AccessControlBase):
             with self.subTest(url=url):
                 self.assertBlocked(self.client.get(url), url)
 
-    def test_django_admin_is_superuser_only(self):
+    def test_django_admin_rejects_non_staff_roles(self):
         for user in (self.customer, self.owner, self.rider):
             self.login_as(user)
             with self.subTest(role=user.role):
-                response = self.client.get("/django-admin/")
-                self.assertNotEqual(response.status_code, 200)
+                for url in ("/admin/", "/django-admin/"):
+                    with self.subTest(url=url):
+                        response = self.client.get(url)
+                        self.assertNotEqual(response.status_code, 200)
 
     def test_anonymous_users_are_sent_to_login(self):
         for url in ("/admin-dashboard/", "/restaurant-dashboard/", "/delivery/", "/orders/"):

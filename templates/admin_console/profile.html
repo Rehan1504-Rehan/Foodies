@@ -17,7 +17,7 @@
         <div class="col-6 fd-mini-stat"><strong>{{ user.last_login|date:"d M Y"|default:"—" }}</strong><span>Last login</span></div>
       </div>
       <div class="d-grid gap-2 mt-3">
-        <a class="btn btn-soft" href="/django-admin/"><i class="bi bi-database me-1"></i>Django admin</a>
+        <a class="btn btn-soft" href="/admin/"><i class="bi bi-database me-1"></i>Django admin</a>
         <a class="btn btn-soft" href="{% url 'accounts:notifications' %}"><i class="bi bi-bell me-1"></i>Notifications</a>
       </div>
     </div>
