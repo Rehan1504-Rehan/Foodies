@@ -1,0 +1,36 @@
+{% extends "delivery/base.html" %}
+{% load foodies_extras %}
+{% block title %}Delivery history — FOODIES Partner{% endblock %}
+{% block page_heading %}Delivery history{% endblock %}
+
+{% block content %}
+<div class="d-flex flex-wrap gap-2 mb-3">
+  <a class="fd-chip {% if not status %}active{% endif %}" href="{% url 'delivery:history' %}">All</a>
+  <a class="fd-chip {% if status == 'DELIVERED' %}active{% endif %}" href="?status=DELIVERED">Delivered</a>
+  <a class="fd-chip {% if status == 'OUT_FOR_DELIVERY' %}active{% endif %}" href="?status=OUT_FOR_DELIVERY">Out for delivery</a>
+  <a class="fd-chip {% if status == 'CANCELLED' %}active{% endif %}" href="?status=CANCELLED">Cancelled</a>
+</div>
+
+<div class="fd-table-wrap">
+  <div class="fd-table-scroll">
+    <table class="fd-table">
+      <thead><tr><th>Order</th><th>Restaurant</th><th>Customer</th><th>Amount</th><th>Status</th><th>Completed</th><th></th></tr></thead>
+      <tbody>
+        {% for order in orders %}
+          <tr>
+            <td class="fw-semibold">#{{ order.order_number }}</td>
+            <td class="small">{{ order.restaurant.name|truncatechars:20 }}</td>
+            <td class="small">{{ order.customer_name|truncatechars:16 }}</td>
+            <td class="fw-semibold">{{ order.total_amount|inr:0 }}</td>
+            <td><span class="fd-badge {{ order.order_status|status_class }}">{{ order.status_label }}</span></td>
+            <td class="small text-muted-2">{{ order.delivered_at|date:"d M Y, h:i A"|default:"—" }}</td>
+            <td class="text-end"><a class="btn btn-sm btn-soft" href="{% url 'delivery:order_detail' order.order_number %}">View</a></td>
+          </tr>
+        {% empty %}
+          <tr><td colspan="7" class="text-center text-muted-2 py-5">No deliveries found for this filter.</td></tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+{% endblock %}

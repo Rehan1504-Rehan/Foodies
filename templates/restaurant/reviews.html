@@ -1,0 +1,70 @@
+{% extends "restaurant/base.html" %}
+{% load foodies_extras %}
+{% block title %}Reviews — {{ restaurant.name }}{% endblock %}
+{% block page_heading %}Customer reviews{% endblock %}
+
+{% block content %}
+<div class="row g-3 mb-3">
+  <div class="col-lg-4">
+    <div class="fd-stat-card h-100">
+      <div class="fd-stat-icon"><i class="bi bi-star"></i></div>
+      <div class="fd-stat-value">{{ avg|floatformat:2 }}</div>
+      <div class="fd-stat-label">{{ restaurant.rating_count }} reviews • reputation score</div>
+    </div>
+  </div>
+  <div class="col-lg-8">
+    <div class="fd-card fd-card-body h-100">
+      <div class="d-flex justify-content-between align-items-center mb-3">
+        <h2 class="h6 fw-bold mb-0">Rating breakdown</h2>
+        <form method="get" class="d-flex gap-2">
+          <select class="form-select form-select-sm" name="rating" onchange="this.form.submit()">
+            <option value="">All ratings</option>
+            {% for star in "54321"|make_list %}<option value="{{ star }}" {% if rating|stringformat:"s" == star %}selected{% endif %}>{{ star }} star</option>{% endfor %}
+          </select>
+        </form>
+      </div>
+      {% for row in distribution %}
+        <div class="d-flex align-items-center gap-2 mb-2">
+          <span class="small text-muted-2" style="width:30px">{{ row.star }}★</span>
+          <div class="fd-progress-thin flex-grow-1"><span style="width:{{ row.count|percent_of:restaurant.rating_count }}%"></span></div>
+          <span class="small fw-semibold" style="width:36px;text-align:right">{{ row.count }}</span>
+        </div>
+      {% endfor %}
+    </div>
+  </div>
+</div>
+
+{% for review in reviews %}
+  <div class="fd-card fd-card-body mb-3">
+    <div class="d-flex justify-content-between flex-wrap gap-2">
+      <div class="d-flex gap-3">
+        <span class="fd-avatar">{{ review.customer.initials }}</span>
+        <div>
+          <div class="fw-bold">{{ review.customer.full_name }}</div>
+          <div class="small text-muted-2">Order #{{ review.order.order_number }} • {{ review.created_at|date:"d M Y, h:i A" }}</div>
+        </div>
+      </div>
+      <div class="text-end">
+        <div class="fd-stars">{{ review.rating|star_rating }}</div>
+        {% if review.is_hidden %}<span class="fd-badge fd-badge-cancelled">Hidden by admin</span>{% endif %}
+      </div>
+    </div>
+    {% if review.comment %}<p class="mt-3 mb-2">{{ review.comment }}</p>{% endif %}
+    {% if review.reply %}
+      <div class="bg-soft rounded-3 p-3 mt-2">
+        <div class="small-caps text-muted-2 mb-1">Your reply</div>
+        <div class="small">{{ review.reply }}</div>
+      </div>
+    {% endif %}
+    <form method="post" action="{% url 'dashboard:restaurant_reply_review' review.pk %}" class="mt-3">
+      {% csrf_token %}
+      <div class="input-group">
+        <input class="form-control" name="reply" maxlength="600" placeholder="Reply to this review…" value="{{ review.reply }}">
+        <button class="btn btn-brand" type="submit">{% if review.reply %}Update reply{% else %}Post reply{% endif %}</button>
+      </div>
+    </form>
+  </div>
+{% empty %}
+  {% include "partials/empty.html" with icon="⭐" title="No reviews yet" message="Reviews appear after customers receive their orders and rate your food." %}
+{% endfor %}
+{% endblock %}

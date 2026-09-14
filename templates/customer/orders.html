@@ -1,0 +1,62 @@
+{% extends "partials/base.html" %}
+{% load static foodies_extras %}
+{% block title %}My orders — FOODIES{% endblock %}
+
+{% block body %}
+{% include "partials/customer_nav.html" %}
+<main class="container py-4">
+  <div class="d-flex flex-wrap justify-content-between align-items-end gap-2 mb-4">
+    <div>
+      <h1 class="h3 mb-1">My orders</h1>
+      <p class="text-muted-2 mb-0">Track live orders, download invoices and reorder your favourites.</p>
+    </div>
+    <a class="btn btn-brand" href="{% url 'restaurants:list' %}"><i class="bi bi-plus-lg me-1"></i>Order again</a>
+  </div>
+
+  <ul class="nav nav-pills gap-2 mb-4">
+    <li class="nav-item"><a class="nav-link rounded-pill {% if not status_filter %}active{% endif %}" href="{% url 'orders:list' %}">All ({{ page_obj.paginator.count }})</a></li>
+    <li class="nav-item"><a class="nav-link rounded-pill {% if status_filter == 'active' %}active{% endif %}" href="?status=active">Active ({{ active_count }})</a></li>
+    <li class="nav-item"><a class="nav-link rounded-pill {% if status_filter == 'completed' %}active{% endif %}" href="?status=completed">Delivered ({{ completed_count }})</a></li>
+    <li class="nav-item"><a class="nav-link rounded-pill {% if status_filter == 'cancelled' %}active{% endif %}" href="?status=cancelled">Cancelled ({{ cancelled_count }})</a></li>
+  </ul>
+
+  {% for order in orders %}
+    <article class="fd-card fd-card-body mb-3">
+      <div class="d-flex flex-wrap justify-content-between gap-3">
+        <div class="d-flex gap-3 align-items-start">
+          {% if order.restaurant.logo %}
+            <img src="{{ order.restaurant.logo.url }}" class="fd-avatar" alt="{{ order.restaurant.name }}">
+          {% else %}
+            <span class="fd-avatar">{{ order.restaurant.name|slice:":1" }}</span>
+          {% endif %}
+          <div>
+            <div class="d-flex align-items-center gap-2 flex-wrap">
+              <h2 class="h6 fw-bold mb-0">{{ order.restaurant.name }}</h2>
+              <span class="fd-badge {{ order.order_status|status_class }}">{{ order.status_label }}</span>
+            </div>
+            <div class="small text-muted-2">Order #{{ order.order_number }} • {{ order.created_at|date:"d M Y, h:i A" }}</div>
+            <div class="small text-muted-2">{{ order.items_total_quantity }} item{{ order.items_total_quantity|pluralize }} • {{ order.items.first.food_name|default:"" }}{% if order.items.count > 1 %} +{{ order.items.count|add:"-1" }} more{% endif %}</div>
+            {% if order.is_active and order.delivery_boy %}
+              <div class="small text-success mt-1"><i class="bi bi-scooter me-1"></i>{{ order.delivery_boy.full_name }} is delivering your order</div>
+            {% endif %}
+          </div>
+        </div>
+        <div class="text-end">
+          <div class="fw-bold fs-5">₹{{ order.total_amount|floatformat:2 }}</div>
+          <div class="small text-muted-2">{{ order.get_payment_status_display }}</div>
+          <div class="d-flex gap-2 mt-2 flex-wrap justify-content-end">
+            <a class="btn btn-sm btn-soft" href="{% url 'orders:detail' order.order_number %}">Details</a>
+            {% if order.is_active %}<a class="btn btn-sm btn-brand" href="{% url 'orders:track' order.order_number %}"><i class="bi bi-geo me-1"></i>Track</a>{% endif %}
+            {% if order.is_delivered and order.can_review %}<a class="btn btn-sm btn-outline-brand" href="{% url 'reviews:create' order.order_number %}"><i class="bi bi-star me-1"></i>Review</a>{% endif %}
+          </div>
+        </div>
+      </div>
+    </article>
+  {% empty %}
+    {% include "partials/empty.html" with icon="🧾" title="No orders here yet" message="Your FOODIES orders will appear here once you place one." action_url="/restaurants/" action_label="Browse restaurants" %}
+  {% endfor %}
+
+  {% include "partials/pagination.html" %}
+</main>
+{% include "partials/footer.html" %}
+{% endblock %}

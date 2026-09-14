@@ -1,0 +1,52 @@
+{% extends "admin_console/base.html" %}
+{% load foodies_extras %}
+{% block title %}Settings — FOODIES Admin{% endblock %}
+{% block page_heading %}Platform settings{% endblock %}
+
+{% block content %}
+<div class="row g-3">
+  <div class="col-lg-7">
+    <div class="fd-card fd-card-body">
+      <h2 class="h6 fw-bold mb-3">Active configuration</h2>
+      <p class="small text-muted-2">
+        These values are read from environment variables / Django settings at startup, so secrets are never stored in the codebase.
+        Update your <code>.env</code> (locally) or the dashboard environment (Render / Railway) and restart the service.
+      </p>
+      <div class="fd-table-scroll">
+        <table class="fd-table">
+          <thead><tr><th>Setting</th><th class="text-end">Value</th></tr></thead>
+          <tbody>
+            {% for key, value in config.items %}
+              <tr>
+                <td class="fw-semibold">{{ key }}</td>
+                <td class="text-end">{{ value }}</td>
+              </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+  <div class="col-lg-5">
+    <div class="fd-card fd-card-body mb-3">
+      <h2 class="h6 fw-bold mb-3">Environment variables</h2>
+      <ul class="list-unstyled small d-grid gap-2 mb-0">
+        <li><code>SECRET_KEY</code> — Django secret (never commit)</li>
+        <li><code>DEBUG</code> — true/false</li>
+        <li><code>DATABASE_URL</code> — PostgreSQL connection string</li>
+        <li><code>RAZORPAY_KEY_ID</code> / <code>RAZORPAY_KEY_SECRET</code></li>
+        <li><code>ALLOWED_HOSTS</code>, <code>CSRF_TRUSTED_ORIGINS</code></li>
+        <li><code>TAX_RATE</code>, <code>PLATFORM_FEE</code>, <code>FREE_DELIVERY_ABOVE</code></li>
+      </ul>
+    </div>
+    <div class="fd-card fd-card-body">
+      <h2 class="h6 fw-bold mb-3">Quick actions</h2>
+      <div class="d-grid gap-2">
+        <a class="btn btn-soft" href="/django-admin/"><i class="bi bi-database me-1"></i>Open Django admin</a>
+        <a class="btn btn-soft" href="/api/"><i class="bi bi-code-slash me-1"></i>Browse REST API</a>
+        <a class="btn btn-soft" href="/healthz/" target="_blank"><i class="bi bi-heart-pulse me-1"></i>Health check</a>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}

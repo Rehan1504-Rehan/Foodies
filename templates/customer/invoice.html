@@ -1,0 +1,91 @@
+{% extends "partials/base.html" %}
+{% load static foodies_extras %}
+{% block title %}Invoice #{{ order.order_number }} — FOODIES{% endblock %}
+
+{% block body %}
+{% include "partials/customer_nav.html" %}
+<main class="container py-4">
+  <div class="d-flex justify-content-between align-items-center mb-4">
+    <a class="btn btn-light" href="{% url 'orders:detail' order.order_number %}"><i class="bi bi-arrow-left me-1"></i>Back to order</a>
+    <button class="btn btn-brand" onclick="window.print()"><i class="bi bi-printer me-1"></i>Print invoice</button>
+  </div>
+
+  <div class="fd-card fd-card-body">
+    <div class="d-flex justify-content-between flex-wrap gap-3 border-bottom pb-3 mb-4">
+      <div>
+        <div class="fd-brand mb-1"><span class="fd-brand-mark">🍔</span> <span>{{ SITE_NAME }}<small>Good Food. Great Mood.</small></span></div>
+        <div class="small text-muted-2">Tax Invoice / Order Receipt</div>
+      </div>
+      <div class="text-end small">
+        <div class="fw-bold">Invoice: FD-INV-{{ order.order_number }}</div>
+        <div class="text-muted-2">Order date: {{ order.created_at|date:"d M Y, h:i A" }}</div>
+        <div class="text-muted-2">{{ order.get_order_status_display }}</div>
+      </div>
+    </div>
+
+    <div class="row g-3 mb-4 small">
+      <div class="col-md-4">
+        <div class="small-caps text-muted-2 mb-1">Billed to</div>
+        <div class="fw-bold">{{ order.customer_name }}</div>
+        <div class="text-muted-2">{{ order.customer.email }}</div>
+        <div class="text-muted-2">{{ order.customer_phone }}</div>
+      </div>
+      <div class="col-md-4">
+        <div class="small-caps text-muted-2 mb-1">Delivered to</div>
+        <div class="text-muted-2">{{ order.delivery_address_text }}</div>
+      </div>
+      <div class="col-md-4">
+        <div class="small-caps text-muted-2 mb-1">Prepared by</div>
+        <div class="fw-bold">{{ order.restaurant.name }}</div>
+        <div class="text-muted-2">{{ order.restaurant.address }}, {{ order.restaurant.city }}</div>
+        <div class="text-muted-2">{{ order.restaurant.phone }}</div>
+      </div>
+    </div>
+
+    <div class="fd-table-scroll mb-4">
+      <table class="fd-table">
+        <thead><tr><th>Item</th><th>Type</th><th class="text-end">Unit price</th><th class="text-end">Qty</th><th class="text-end">Amount</th></tr></thead>
+        <tbody>
+          {% for item in order.items.all %}
+            <tr>
+              <td>{{ item.food_name }}<div class="text-muted-2" style="font-size:.72rem">{{ item.category_name }}</div></td>
+              <td><span class="fd-veg-dot {% if not item.is_veg %}nonveg{% endif %}"></span></td>
+              <td class="text-end">₹{{ item.price|floatformat:2 }}</td>
+              <td class="text-end">{{ item.quantity }}</td>
+              <td class="text-end fw-semibold">₹{{ item.total|floatformat:2 }}</td>
+            </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+
+    <div class="row g-4">
+      <div class="col-md-6">
+        <div class="small-caps text-muted-2 mb-2">Payment</div>
+        <div class="small">Method: {{ payment.get_payment_method_display|default:"Cash on delivery" }}</div>
+        <div class="small">Reference: {{ payment.payment_id|default:"—" }}</div>
+        <div class="small">Status: {{ order.get_payment_status_display }}</div>
+        {% if order.delivery_boy %}
+          <div class="small-caps text-muted-2 mt-3 mb-1">Delivery partner</div>
+          <div class="small">{{ order.delivery_boy.full_name }} • {{ order.delivery_boy.phone }}</div>
+        {% endif %}
+      </div>
+      <div class="col-md-6">
+        <div class="fd-bill-row"><span>Item total (MRP)</span><span>₹{{ order.subtotal|add:order.discount|floatformat:2 }}</span></div>
+        {% if order.discount %}<div class="fd-bill-row discount"><span>Item discount</span><span>− ₹{{ order.discount|floatformat:2 }}</span></div>{% endif %}
+        <div class="fd-bill-row"><span>Subtotal</span><span>₹{{ order.subtotal|floatformat:2 }}</span></div>
+        {% if order.coupon_discount %}<div class="fd-bill-row discount"><span>Coupon discount</span><span>− ₹{{ order.coupon_discount|floatformat:2 }}</span></div>{% endif %}
+        <div class="fd-bill-row"><span>Delivery fee</span><span>₹{{ order.delivery_fee|floatformat:2 }}</span></div>
+        <div class="fd-bill-row"><span>Taxes &amp; charges</span><span>₹{{ order.tax|floatformat:2 }}</span></div>
+        <div class="fd-bill-row"><span>Platform fee</span><span>₹{{ order.platform_fee|floatformat:2 }}</span></div>
+        <div class="fd-bill-row total"><span>Grand total</span><span>₹{{ order.total_amount|floatformat:2 }}</span></div>
+      </div>
+    </div>
+
+    <div class="text-center small text-muted-2 mt-5 pt-3 border-top">
+      Thank you for ordering with FOODIES. This is a computer generated invoice.<br>
+      Good Food. Great Mood.
+    </div>
+  </div>
+</main>
+{% endblock %}

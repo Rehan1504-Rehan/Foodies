@@ -1,0 +1,165 @@
+{% extends "partials/base.html" %}
+{% load static foodies_extras %}
+{% block title %}{{ restaurant.name }} — menu, reviews & offers | FOODIES{% endblock %}
+
+{% block body %}
+{% include "partials/customer_nav.html" %}
+<main class="container py-4">
+  <nav aria-label="breadcrumb">
+    <ol class="breadcrumb small">
+      <li class="breadcrumb-item"><a href="{% url 'core:home' %}">Home</a></li>
+      <li class="breadcrumb-item"><a href="{% url 'restaurants:list' %}">Restaurants</a></li>
+      <li class="breadcrumb-item active" aria-current="page">{{ restaurant.name }}</li>
+    </ol>
+  </nav>
+
+  <!-- Cover + identity -->
+  <section class="fd-card overflow-hidden mb-4">
+    <div class="position-relative">
+      {% if restaurant.cover_image %}
+        <img src="{{ restaurant.cover_image.url }}" class="fd-cover-img" alt="{{ restaurant.name }} cover">
+      {% else %}
+        <img src="{% static 'images/placeholder-restaurant.jpg' %}" class="fd-cover-img" alt="{{ restaurant.name }}">
+      {% endif %}
+      {% if restaurant.coupons.exists %}
+        {% with offer=restaurant.coupons.first %}
+          <div class="fd-offer-ribbon"><i class="bi bi-ticket-perforated me-1"></i>{{ offer.display_value }} with code {{ offer.code }}</div>
+        {% endwith %}
+      {% endif %}
+    </div>
+    <div class="fd-card-body position-relative">
+      <div class="d-flex flex-wrap gap-3 align-items-end" style="margin-top:-56px">
+        {% if restaurant.logo %}
+          <img src="{{ restaurant.logo.url }}" class="fd-logo-thumb" alt="{{ restaurant.name }} logo">
+        {% else %}
+          <span class="fd-logo-thumb d-grid" style="place-items:center;font-size:2rem;background:var(--fd-primary-soft);color:var(--fd-primary)">{{ restaurant.name|slice:":1" }}</span>
+        {% endif %}
+        <div class="flex-grow-1 pb-1">
+          <h1 class="h3 mb-1">{{ restaurant.name }}
+            {% if restaurant.is_open %}<span class="fd-badge fd-badge-open align-middle">Open now</span>{% else %}<span class="fd-badge fd-badge-closed align-middle">Closed</span>{% endif %}
+          </h1>
+          <p class="text-muted-2 small mb-2">{{ restaurant.cuisine_type }} • {{ restaurant.address }}, {{ restaurant.area }}, {{ restaurant.city }}</p>
+          <div class="d-flex flex-wrap gap-3 small">
+            <span class="fw-bold text-success"><i class="bi bi-star-fill"></i> {{ restaurant.rating|default:"New" }} {% if restaurant.rating_count %}<span class="text-muted-2 fw-normal">({{ restaurant.rating_count }} reviews)</span>{% endif %}</span>
+            <span class="text-muted-2"><i class="bi bi-clock me-1"></i>{{ restaurant.delivery_time }} min delivery</span>
+            <span class="text-muted-2"><i class="bi bi-scooter me-1"></i>{% if restaurant.delivery_fee %}₹{{ restaurant.delivery_fee|floatformat:0 }} delivery fee{% else %}Free delivery{% endif %}</span>
+            <span class="text-muted-2"><i class="bi bi-basket me-1"></i>Min order ₹{{ restaurant.minimum_order|floatformat:0 }}</span>
+            <span class="text-muted-2"><i class="bi bi-telephone me-1"></i>{{ restaurant.phone }}</span>
+          </div>
+        </div>
+        <div class="d-flex gap-2 pb-1">
+          {% if user.is_authenticated and user.is_customer %}
+            <button class="btn {% if is_favorite %}btn-brand{% else %}btn-outline-brand{% endif %}"
+                    data-favorite-url="{% url 'restaurants:toggle_favorite' restaurant.slug %}">
+              <i class="bi {% if is_favorite %}bi-heart-fill{% else %}bi-heart{% endif %} me-1"></i><span class="d-none d-sm-inline">Favourite</span>
+            </button>
+          {% endif %}
+          <a class="btn btn-soft" href="{% url 'restaurants:list' %}"><i class="bi bi-arrow-left me-1"></i>Back</a>
+        </div>
+      </div>
+      {% if restaurant.description %}
+        <p class="text-muted-2 small mt-3 mb-0">{{ restaurant.description }}</p>
+      {% endif %}
+    </div>
+  </section>
+
+  {% if coupons %}
+  <section class="mb-4">
+    <div class="row g-3">
+      {% for coupon in coupons %}
+        <div class="col-md-6 col-lg-4">
+          <div class="fd-card fd-card-body d-flex align-items-center gap-3 h-100">
+            <i class="bi bi-ticket-perforated fs-3 text-primary-brand"></i>
+            <div class="flex-grow-1">
+              <div class="fw-bold">{{ coupon.display_value }} — {{ coupon.title|default:"Special offer" }}</div>
+              <div class="small text-muted-2">Min order {{ coupon.minimum_order|inr:0 }} • {{ coupon.description|truncatechars:52 }}</div>
+            </div>
+            <button class="btn btn-sm btn-soft" data-copy="{{ coupon.code }}">{{ coupon.code }}</button>
+          </div>
+        </div>
+      {% endfor %}
+    </div>
+  </section>
+  {% endif %}
+
+  <div class="row g-4">
+    <!-- Menu -->
+    <div class="col-lg-8">
+      <div class="d-flex flex-wrap gap-2 mb-3">
+        <a class="fd-chip active" href="#menu">All items ({{ food_items|length }})</a>
+        {% for category in categories %}
+          <a class="fd-chip" href="#cat-{{ category.pk }}">{{ category.name }} ({{ category.item_count }})</a>
+        {% endfor %}
+      </div>
+
+      {% regroup food_items by category as grouped %}
+      {% for group in grouped %}
+        <section class="fd-card mb-4" id="cat-{{ group.grouper.pk }}">
+          <div class="fd-card-body">
+            <div class="d-flex justify-content-between align-items-center mb-2">
+              <h2 class="h5 mb-0">{{ group.grouper.emoji }} {{ group.grouper.name }}</h2>
+              <span class="text-muted-2 small">{{ group.list|length }} item{{ group.list|length|pluralize }}</span>
+            </div>
+            <div class="mt-2">
+              {% for food in group.list %}
+                {% include "partials/food_row.html" with food=food %}
+              {% endfor %}
+            </div>
+          </div>
+        </section>
+      {% empty %}
+        {% include "partials/empty.html" with icon="🍽️" title="This kitchen has not published a menu yet" message="Please check back soon — new dishes are added all the time." %}
+      {% endfor %}
+    </div>
+
+    <!-- Sidebar: cart shortcut + reviews -->
+    <div class="col-lg-4">
+      <div class="fd-sticky-summary">
+        <div class="fd-card fd-card-body mb-4">
+          <h3 class="h6 fw-bold mb-3"><i class="bi bi-bag me-2"></i>Your cart</h3>
+          <div id="fdMiniCart">
+            <p class="small text-muted-2 mb-2">{{ cart_count }} item{{ cart_count|pluralize }} in your bag.</p>
+            <a class="btn btn-brand w-100" href="{% url 'cart:detail' %}">View cart &amp; checkout</a>
+          </div>
+        </div>
+
+        <div class="fd-card fd-card-body">
+          <h3 class="h6 fw-bold mb-3">Ratings &amp; reviews</h3>
+          <div class="d-flex align-items-center gap-3 mb-3">
+            <div class="text-center">
+              <div class="display-6 fw-bold mb-0">{{ restaurant.rating|default:"0.0" }}</div>
+              <div class="fd-stars small">{{ restaurant.rating|star_rating }}</div>
+              <div class="text-muted-2" style="font-size:.72rem">{{ restaurant.rating_count }} reviews</div>
+            </div>
+            <div class="flex-grow-1">
+              {% for star, count in rating_breakdown.items %}
+                <div class="d-flex align-items-center gap-2 mb-1">
+                  <span class="small text-muted-2" style="width:24px">{{ star }}★</span>
+                  <div class="fd-progress-thin flex-grow-1"><span style="width:{{ count|percent_of:restaurant.rating_count }}%"></span></div>
+                  <span class="small text-muted-2" style="width:24px">{{ count }}</span>
+                </div>
+              {% endfor %}
+            </div>
+          </div>
+          {% for review in reviews %}
+            <div class="border-top pt-3 mt-3">
+              <div class="d-flex justify-content-between align-items-center">
+                <span class="fw-bold small">{{ review.customer.full_name }}</span>
+                <span class="fd-stars small">{{ review.rating|star_rating }}</span>
+              </div>
+              <div class="text-muted-2" style="font-size:.72rem">{{ review.created_at|date:"d M Y" }}</div>
+              {% if review.comment %}<p class="small mb-1 mt-1">{{ review.comment }}</p>{% endif %}
+              {% if review.reply %}
+                <div class="bg-soft rounded-3 p-2 small mt-2"><strong>Owner reply:</strong> {{ review.reply }}</div>
+              {% endif %}
+            </div>
+          {% empty %}
+            <p class="small text-muted-2 mb-0">No reviews yet — be the first to review after your order arrives.</p>
+          {% endfor %}
+        </div>
+      </div>
+    </div>
+  </div>
+</main>
+{% include "partials/footer.html" %}
+{% endblock %}

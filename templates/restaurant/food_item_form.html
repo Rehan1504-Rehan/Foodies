@@ -1,0 +1,58 @@
+{% extends "restaurant/base.html" %}
+{% load static foodies_extras %}
+{% block title %}{% if instance %}Edit {{ instance.name }}{% else %}Add dish{% endif %} — {{ restaurant.name }}{% endblock %}
+{% block page_heading %}{% if instance %}Edit dish{% else %}Add a new dish{% endif %}{% endblock %}
+
+{% block content %}
+<div class="row g-3">
+  <div class="col-lg-7">
+    <div class="fd-card fd-card-body">
+      <form method="post" enctype="multipart/form-data">
+        {% csrf_token %}
+        <div class="row g-3">
+          <div class="col-md-8"><label class="form-label">Dish name</label>{{ form.name }}</div>
+          <div class="col-md-4"><label class="form-label">Category</label>{{ form.category }}</div>
+          <div class="col-12"><label class="form-label">Description</label>{{ form.description }}</div>
+          <div class="col-md-4"><label class="form-label">Price (₹)</label>{{ form.price }}</div>
+          <div class="col-md-4"><label class="form-label">Discounted price (₹)</label>{{ form.discount_price }}<div class="form-text">Optional — must be lower than price</div></div>
+          <div class="col-md-4"><label class="form-label">Preparation time (min)</label>{{ form.preparation_time }}</div>
+          <div class="col-md-6"><label class="form-label">Dish photo</label>{{ form.image }}</div>
+          <div class="col-md-6">
+            <label class="form-label d-block">Options</label>
+            <div class="form-check">{{ form.is_veg }} <label class="form-check-label" for="{{ form.is_veg.id_for_label }}">Vegetarian</label></div>
+            <div class="form-check">{{ form.is_available }} <label class="form-check-label" for="{{ form.is_available.id_for_label }}">Available to order</label></div>
+            <div class="form-check">{{ form.is_recommended }} <label class="form-check-label" for="{{ form.is_recommended.id_for_label }}">Feature as bestseller</label></div>
+          </div>
+        </div>
+        {% for error in form.non_field_errors %}<div class="text-danger small mt-2">{{ error }}</div>{% endfor %}
+        <div class="d-flex gap-2 mt-4">
+          <button class="btn btn-brand" type="submit"><i class="bi bi-check2 me-1"></i>{% if instance %}Save dish{% else %}Add dish{% endif %}</button>
+          <a class="btn btn-light" href="{% url 'dashboard:restaurant_menu' %}">Cancel</a>
+        </div>
+      </form>
+    </div>
+  </div>
+  <div class="col-lg-5">
+    <div class="fd-card fd-card-body">
+      <h2 class="h6 fw-bold mb-3">How it looks to customers</h2>
+      <div class="fd-food-card">
+        <div class="fd-food-body">
+          <div class="d-flex align-items-center gap-2 mb-1">
+            <span class="fd-veg-dot {% if instance and not instance.is_veg %}nonveg{% endif %}"></span>
+            <span class="small text-muted-2">{{ instance.preparation_time|default:"15" }} min</span>
+          </div>
+          <h3 class="h6 fw-bold mb-1">{{ instance.name|default:"Your dish name" }}</h3>
+          <p class="small text-muted-2 mb-2">{{ instance.description|default:"A short, appetising description of the dish."|truncatechars:80 }}</p>
+          <div class="fw-bold">{{ instance.final_price|default:"0.00"|inr }}</div>
+        </div>
+        <div class="text-center">
+          {% if instance.image %}<img src="{{ instance.image.url }}" class="fd-food-thumb" alt="">{% else %}<div class="fd-food-thumb d-grid" style="place-items:center;font-size:1.8rem">🍽️</div>{% endif %}
+        </div>
+      </div>
+      <div class="alert alert-light small mt-3 mb-0 rounded-3">
+        <i class="bi bi-lightbulb me-1"></i>Tip: dishes with clear photos and honest descriptions get ordered up to 40% more often.
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}

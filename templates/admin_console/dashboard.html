@@ -1,0 +1,238 @@
+{% extends "admin_console/base.html" %}
+{% load static foodies_extras %}
+{% block title %}FOODIES Admin — Dashboard{% endblock %}
+{% block page_heading %}Platform overview{% endblock %}
+
+{% block content %}
+<!-- KPI grid -->
+<div class="row g-3 mb-4">
+  <div class="col-6 col-xl-3">
+    <div class="fd-stat-card">
+      <div class="fd-stat-icon"><i class="bi bi-people"></i></div>
+      <div class="fd-stat-value">{{ stats.total_customers }}</div>
+      <div class="fd-stat-label">Total customers</div>
+    </div>
+  </div>
+  <div class="col-6 col-xl-3">
+    <div class="fd-stat-card green">
+      <div class="fd-stat-icon"><i class="bi bi-shop"></i></div>
+      <div class="fd-stat-value">{{ stats.total_restaurants }}</div>
+      <div class="fd-stat-label">{{ stats.approved_restaurants }} approved</div>
+    </div>
+  </div>
+  <div class="col-6 col-xl-3">
+    <div class="fd-stat-card violet">
+      <div class="fd-stat-icon"><i class="bi bi-scooter"></i></div>
+      <div class="fd-stat-value">{{ stats.total_delivery_boys }}</div>
+      <div class="fd-stat-label">{{ stats.online_delivery_boys }} online now</div>
+    </div>
+  </div>
+  <div class="col-6 col-xl-3">
+    <div class="fd-stat-card blue">
+      <div class="fd-stat-icon"><i class="bi bi-bag-check"></i></div>
+      <div class="fd-stat-value">{{ stats.total_orders }}</div>
+      <div class="fd-stat-label">{{ stats.active_orders }} in progress</div>
+    </div>
+  </div>
+  <div class="col-6 col-xl-3">
+    <div class="fd-stat-card amber">
+      <div class="fd-stat-icon"><i class="bi bi-calendar-check"></i></div>
+      <div class="fd-stat-value">{{ stats.todays_orders }}</div>
+      <div class="fd-stat-label">Today's orders</div>
+    </div>
+  </div>
+  <div class="col-6 col-xl-3">
+    <div class="fd-stat-card green">
+      <div class="fd-stat-icon"><i class="bi bi-currency-rupee"></i></div>
+      <div class="fd-stat-value">{{ stats.todays_revenue|inr:0 }}</div>
+      <div class="fd-stat-label">Today's revenue</div>
+    </div>
+  </div>
+  <div class="col-6 col-xl-3">
+    <div class="fd-stat-card">
+      <div class="fd-stat-icon"><i class="bi bi-graph-up"></i></div>
+      <div class="fd-stat-value">{{ stats.total_revenue|inr:0 }}</div>
+      <div class="fd-stat-label">Total delivered revenue</div>
+    </div>
+  </div>
+  <div class="col-6 col-xl-3">
+    <div class="fd-stat-card amber">
+      <div class="fd-stat-icon"><i class="bi bi-patch-check"></i></div>
+      <div class="fd-stat-value">{{ stats.pending_approvals }}</div>
+      <div class="fd-stat-label">Pending restaurant approvals</div>
+    </div>
+  </div>
+</div>
+
+<!-- Charts -->
+<div class="row g-3 mb-4">
+  <div class="col-xl-8">
+    <div class="fd-card fd-card-body h-100">
+      <div class="d-flex justify-content-between align-items-center mb-2">
+        <h2 class="h6 fw-bold mb-0">Daily orders — last 14 days</h2>
+        <span class="fd-badge fd-badge-soft">Live from database</span>
+      </div>
+      <div class="fd-chart">
+        {% for day in daily %}
+          <div class="fd-chart-bar" title="{{ day.label }}: {{ day.orders }} orders • {{ day.revenue|inr:0 }}">
+            <div class="fd-bar" style="height:{{ day.orders|percent_of:max_daily_orders }}%"></div>
+            <span class="fd-bar-label">{{ day.short }}</span>
+          </div>
+        {% endfor %}
+      </div>
+    </div>
+  </div>
+  <div class="col-xl-4">
+    <div class="fd-card fd-card-body h-100">
+      <h2 class="h6 fw-bold mb-3">Order status split</h2>
+      {% for row in status_split %}
+        <div class="d-flex align-items-center gap-2 mb-2">
+          <span class="small text-muted-2" style="width:120px">{{ row.label }}</span>
+          <div class="fd-progress-thin flex-grow-1"><span style="width:{{ row.count|percent_of:stats.total_orders }}%"></span></div>
+          <span class="small fw-semibold" style="width:34px;text-align:right">{{ row.count }}</span>
+        </div>
+      {% endfor %}
+    </div>
+  </div>
+</div>
+
+<div class="row g-3 mb-4">
+  <div class="col-lg-6">
+    <div class="fd-card fd-card-body h-100">
+      <h2 class="h6 fw-bold mb-3">Weekly revenue — last 8 weeks</h2>
+      <div class="fd-chart" style="height:170px">
+        {% for week in weekly %}
+          <div class="fd-chart-bar" title="{{ week.label }}: {{ week.revenue|inr:0 }} • {{ week.orders }} orders">
+            <div class="fd-bar green" style="height:{{ week.revenue|percent_of:max_weekly_revenue }}%"></div>
+            <span class="fd-bar-label">{{ week.label }}</span>
+          </div>
+        {% endfor %}
+      </div>
+    </div>
+  </div>
+  <div class="col-lg-6">
+    <div class="fd-card fd-card-body h-100">
+      <h2 class="h6 fw-bold mb-3">Monthly revenue — last 6 months</h2>
+      <div class="fd-chart" style="height:170px">
+        {% for month in monthly %}
+          <div class="fd-chart-bar" title="{{ month.label }}: {{ month.revenue|inr:0 }} • {{ month.orders }} orders">
+            <div class="fd-bar" style="height:{{ month.revenue|percent_of:max_monthly_revenue }}%"></div>
+            <span class="fd-bar-label">{{ month.label|slice:":6" }}</span>
+          </div>
+        {% endfor %}
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="row g-3 mb-4">
+  <!-- Pending approvals -->
+  <div class="col-lg-4">
+    <div class="fd-card fd-card-body h-100">
+      <div class="d-flex justify-content-between align-items-center mb-3">
+        <h2 class="h6 fw-bold mb-0">Pending approvals</h2>
+        <a class="small" href="{% url 'dashboard:admin_approvals' %}">View all</a>
+      </div>
+      {% for restaurant in pending_restaurants %}
+        <div class="fd-list-row">
+          {% if restaurant.logo %}<img src="{{ restaurant.logo.url }}" class="fd-avatar" alt="">{% else %}<span class="fd-avatar">{{ restaurant.name|slice:":1" }}</span>{% endif %}
+          <div class="flex-grow-1">
+            <div class="fw-semibold small">{{ restaurant.name }}</div>
+            <div class="text-muted-2" style="font-size:.75rem">{{ restaurant.city }} • {{ restaurant.owner.email|truncatechars:22 }}</div>
+          </div>
+          <form method="post" action="{% url 'dashboard:admin_approve_restaurant' restaurant.pk %}">
+            {% csrf_token %}
+            <button class="btn btn-sm btn-brand" type="submit">Approve</button>
+          </form>
+        </div>
+      {% empty %}
+        <p class="small text-muted-2 mb-0">No restaurants waiting for approval. 🎉</p>
+      {% endfor %}
+      <div class="fd-divider"></div>
+      <div class="d-flex justify-content-between small">
+        <span class="text-muted-2">Delivery partners awaiting approval</span>
+        <span class="fw-bold">{{ stats.pending_delivery_approvals }}</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- Top restaurants -->
+  <div class="col-lg-4">
+    <div class="fd-card fd-card-body h-100">
+      <h2 class="h6 fw-bold mb-3">Top restaurants by revenue</h2>
+      {% for restaurant in top_restaurants %}
+        <div class="fd-list-row">
+          <span class="fd-avatar">{{ forloop.counter }}</span>
+          <div class="flex-grow-1">
+            <div class="fw-semibold small">{{ restaurant.name|truncatechars:22 }}</div>
+            <div class="text-muted-2" style="font-size:.75rem">{{ restaurant.order_total }} orders • {{ restaurant.rating }}★</div>
+          </div>
+          <span class="fw-bold small">{{ restaurant.revenue|default:0|inr:0 }}</span>
+        </div>
+      {% empty %}
+        <p class="small text-muted-2 mb-0">No delivered orders yet.</p>
+      {% endfor %}
+    </div>
+  </div>
+
+  <!-- Popular food -->
+  <div class="col-lg-4">
+    <div class="fd-card fd-card-body h-100">
+      <h2 class="h6 fw-bold mb-3">Popular food</h2>
+      {% for food in popular_food %}
+        <div class="fd-list-row">
+          {% if food.image %}<img src="{{ food.image.url }}" class="fd-avatar" alt="">{% else %}<span class="fd-avatar">🍽️</span>{% endif %}
+          <div class="flex-grow-1">
+            <div class="fw-semibold small">{{ food.name|truncatechars:20 }}</div>
+            <div class="text-muted-2" style="font-size:.75rem">{{ food.restaurant.name|truncatechars:20 }}</div>
+          </div>
+          <span class="fd-badge fd-badge-soft">{{ food.order_count }}×</span>
+        </div>
+      {% empty %}
+        <p class="small text-muted-2 mb-0">No orders yet.</p>
+      {% endfor %}
+    </div>
+  </div>
+</div>
+
+<!-- Revenue summary + recent orders -->
+<div class="row g-3">
+  <div class="col-lg-4">
+    <div class="fd-card fd-card-body h-100">
+      <h2 class="h6 fw-bold mb-3">Financial summary</h2>
+      <div class="fd-bill-row"><span>Delivered revenue</span><span class="fw-bold">{{ stats.total_revenue|inr }}</span></div>
+      <div class="fd-bill-row"><span>Platform commission (15%)</span><span class="fw-bold">{{ stats.total_commission|inr }}</span></div>
+      <div class="fd-bill-row"><span>Delivery payouts</span><span class="fw-bold">{{ stats.delivery_payouts|inr }}</span></div>
+      <div class="fd-bill-row"><span>COD collected</span><span class="fw-bold">{{ stats.cod_pending|inr }}</span></div>
+      <div class="fd-bill-row"><span>Cancelled orders</span><span class="fw-bold">{{ stats.cancelled_orders }}</span></div>
+      <div class="fd-bill-row"><span>Average rating</span><span class="fw-bold">{{ stats.avg_rating|floatformat:2 }}★ ({{ stats.total_reviews }})</span></div>
+    </div>
+  </div>
+  <div class="col-lg-8">
+    <div class="fd-card fd-card-body h-100">
+      <div class="d-flex justify-content-between align-items-center mb-3">
+        <h2 class="h6 fw-bold mb-0">Recent orders</h2>
+        <a class="small" href="{% url 'dashboard:admin_orders' %}">All orders</a>
+      </div>
+      <div class="fd-table-scroll">
+        <table class="fd-table">
+          <thead><tr><th>Order</th><th>Customer</th><th>Restaurant</th><th>Amount</th><th>Status</th></tr></thead>
+          <tbody>
+            {% for order in recent_orders %}
+              <tr>
+                <td><a href="{% url 'dashboard:admin_order_detail' order.order_number %}" class="fw-semibold">#{{ order.order_number }}</a></td>
+                <td>{{ order.customer.full_name|truncatechars:18 }}</td>
+                <td>{{ order.restaurant.name|truncatechars:18 }}</td>
+                <td class="fw-bold">{{ order.total_amount|inr }}</td>
+                <td><span class="fd-badge {{ order.order_status|status_class }}">{{ order.status_label }}</span></td>
+              </tr>
+            {% empty %}
+              <tr><td colspan="5" class="text-center text-muted-2 py-4">No orders yet.</td></tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}

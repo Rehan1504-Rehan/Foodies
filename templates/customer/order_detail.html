@@ -1,0 +1,152 @@
+{% extends "partials/base.html" %}
+{% load static foodies_extras %}
+{% block title %}Order #{{ order.order_number }} — FOODIES{% endblock %}
+
+{% block body %}
+{% include "partials/customer_nav.html" %}
+<main class="container py-4">
+  <div class="d-flex flex-wrap justify-content-between align-items-center gap-2 mb-4">
+    <div>
+      <h1 class="h3 mb-1">Order #{{ order.order_number }}</h1>
+      <p class="text-muted-2 mb-0">Placed on {{ order.created_at|date:"d M Y, h:i A" }} at {{ order.restaurant.name }}</p>
+    </div>
+    <span class="fd-badge {{ order.order_status|status_class }} fs-6">{{ order.status_label }}</span>
+  </div>
+
+  <div class="row g-4">
+    <div class="col-lg-7">
+      <!-- Progress -->
+      <section class="fd-card fd-card-body mb-4">
+        <div class="d-flex justify-content-between align-items-center mb-3">
+          <h2 class="h6 fw-bold mb-0">Order progress</h2>
+          {% if order.is_active %}<a class="btn btn-sm btn-soft" href="{% url 'orders:track' order.order_number %}"><i class="bi bi-geo-alt me-1"></i>Live tracking</a>{% endif %}
+        </div>
+        <div class="fd-progress-thin mb-4"><span style="width:{{ order.progress_percent }}%"></span></div>
+        <ul class="fd-tracker">
+          {% for item in steps %}
+            {% with label=item.0 state=item.1 history=item.2 %}
+              <li class="{{ state }}" data-track-step="{{ label }}">
+                <span class="fd-track-dot">{% if state == 'done' %}<i class="bi bi-check-lg"></i>{% elif state == 'cancelled' %}<i class="bi bi-x-lg"></i>{% else %}<i class="bi bi-circle"></i>{% endif %}</span>
+                <div>
+                  <div class="fw-semibold small">{{ label }}</div>
+                  {% if history %}<div class="text-muted-2" style="font-size:.75rem">{{ history.created_at|date:"d M, h:i A" }}{% if history.note %} • {{ history.note }}{% endif %}</div>{% endif %}
+                </div>
+              </li>
+            {% endwith %}
+          {% endfor %}
+        </ul>
+      </section>
+
+      <!-- Items -->
+      <section class="fd-card fd-card-body mb-4">
+        <h2 class="h6 fw-bold mb-3">Items in this order</h2>
+        {% for item in order.items.all %}
+          <div class="fd-list-row">
+            <span class="fd-veg-dot {% if not item.is_veg %}nonveg{% endif %}"></span>
+            <div class="flex-grow-1">
+              <div class="fw-semibold">{{ item.food_name }}</div>
+              <div class="small text-muted-2">{{ item.category_name }} • ₹{{ item.price|floatformat:2 }} × {{ item.quantity }}</div>
+            </div>
+            <span class="fw-bold">₹{{ item.total|floatformat:2 }}</span>
+          </div>
+        {% endfor %}
+      </section>
+
+      <!-- Delivery details -->
+      <section class="fd-card fd-card-body">
+        <h2 class="h6 fw-bold mb-3">Delivery details</h2>
+        <div class="row g-3 small">
+          <div class="col-md-6">
+            <div class="text-muted-2 small-caps mb-1">Delivering to</div>
+            <div class="fw-bold">{{ order.customer_name }}</div>
+            <div class="text-muted-2">{{ order.delivery_address_text }}</div>
+            <div class="text-muted-2"><i class="bi bi-telephone me-1"></i>{{ order.customer_phone }}</div>
+          </div>
+          <div class="col-md-6">
+            <div class="text-muted-2 small-caps mb-1">Delivery partner</div>
+            {% if order.delivery_boy %}
+              <div class="fw-bold">{{ order.delivery_boy.full_name }}</div>
+              <div class="text-muted-2">{{ order.delivery_boy.phone }}</div>
+              <div class="text-muted-2">{{ order.delivery_profile.get_vehicle_type_display }} • {{ order.delivery_profile.vehicle_number }}</div>
+            {% else %}
+              <p class="text-muted-2 mb-0">A partner will be assigned once your food is ready.</p>
+            {% endif %}
+          </div>
+        </div>
+        {% if order.special_instructions %}
+          <div class="alert alert-light small mt-3 mb-0 rounded-3"><strong>Instructions:</strong> {{ order.special_instructions }}</div>
+        {% endif %}
+      </section>
+    </div>
+
+    <!-- Bill + actions -->
+    <div class="col-lg-5">
+      <div class="fd-sticky-summary">
+        <section class="fd-card fd-card-body mb-3">
+          <h2 class="h6 fw-bold mb-3">Bill summary</h2>
+          <div class="fd-bill-row"><span>Item total (MRP)</span><span>₹{{ order.subtotal|add:order.discount|floatformat:2 }}</span></div>
+          {% if order.discount %}<div class="fd-bill-row discount"><span>Item discount</span><span>− ₹{{ order.discount|floatformat:2 }}</span></div>{% endif %}
+          <div class="fd-bill-row"><span>Subtotal</span><span>₹{{ order.subtotal|floatformat:2 }}</span></div>
+          {% if order.coupon_discount %}
+            <div class="fd-bill-row discount"><span>Coupon {% if order.coupon %}({{ order.coupon.code }}){% endif %}</span><span>− ₹{{ order.coupon_discount|floatformat:2 }}</span></div>
+          {% endif %}
+          <div class="fd-bill-row"><span>Delivery fee</span><span>{% if order.delivery_fee %}₹{{ order.delivery_fee|floatformat:2 }}{% else %}<span class="text-success">FREE</span>{% endif %}</span></div>
+          <div class="fd-bill-row"><span>Taxes</span><span>₹{{ order.tax|floatformat:2 }}</span></div>
+          <div class="fd-bill-row"><span>Platform fee</span><span>₹{{ order.platform_fee|floatformat:2 }}</span></div>
+          <div class="fd-bill-row total"><span>Total</span><span>₹{{ order.total_amount|floatformat:2 }}</span></div>
+          <div class="d-flex justify-content-between align-items-center mt-3">
+            <span class="small text-muted-2">Payment</span>
+            <span class="fd-badge {{ order.payment_status|status_class }}">{{ order.get_payment_status_display }}</span>
+          </div>
+          {% if payment %}
+            <div class="small text-muted-2 mt-1">{{ payment.get_payment_method_display }} • {{ payment.payment_id }}</div>
+          {% endif %}
+        </section>
+
+        <div class="d-grid gap-2">
+          {% if order.payment_status == 'PENDING' %}
+            <a class="btn btn-brand" href="{% url 'payments:pay' order.order_number %}"><i class="bi bi-credit-card me-1"></i>Complete payment</a>
+          {% endif %}
+          {% if order.is_delivered and order.can_review %}
+            <a class="btn btn-brand" href="{% url 'reviews:create' order.order_number %}"><i class="bi bi-star me-1"></i>Rate this order</a>
+          {% endif %}
+          {% if order.is_delivered %}
+            <form method="post" action="{% url 'orders:reorder' order.order_number %}">
+              {% csrf_token %}
+              <button class="btn btn-outline-brand w-100" type="submit"><i class="bi bi-arrow-repeat me-1"></i>Reorder these items</button>
+            </form>
+          {% endif %}
+          <a class="btn btn-light" href="{% url 'orders:invoice' order.order_number %}"><i class="bi bi-file-earmark-text me-1"></i>View invoice</a>
+          {% if order.is_cancellable %}
+            <form method="post" action="{% url 'orders:cancel' order.order_number %}"
+                  data-confirm="Are you sure you want to cancel order #{{ order.order_number }}?" data-confirm-title="Cancel order">
+              {% csrf_token %}
+              <input type="hidden" name="reason" value="Cancelled by customer from order page">
+              <button class="btn btn-outline-danger w-100" type="submit"><i class="bi bi-x-circle me-1"></i>Cancel order</button>
+            </form>
+          {% endif %}
+        </div>
+
+        {% if order.cancellation_reason %}
+          <div class="alert alert-danger small mt-3 mb-0 rounded-3"><strong>Cancelled:</strong> {{ order.cancellation_reason }}</div>
+        {% endif %}
+
+        <!-- Status timeline -->
+        <section class="fd-card fd-card-body mt-3">
+          <h2 class="h6 fw-bold mb-3">Status history</h2>
+          {% for entry in order.status_history.all %}
+            <div class="fd-list-row">
+              <span class="fd-badge {{ entry.status|status_class }}">{{ entry.get_status_display }}</span>
+              <div class="flex-grow-1 small text-muted-2">{{ entry.note|default:"Status updated" }}</div>
+              <span class="small text-muted-2">{{ entry.created_at|date:"d M, h:i A" }}</span>
+            </div>
+          {% empty %}
+            <p class="small text-muted-2 mb-0">No history yet.</p>
+          {% endfor %}
+        </section>
+      </div>
+    </div>
+  </div>
+</main>
+{% include "partials/footer.html" %}
+{% endblock %}

@@ -1,0 +1,102 @@
+{% extends "partials/base.html" %}
+{% load static foodies_extras %}
+{% block title %}Track order #{{ order.order_number }} — FOODIES{% endblock %}
+
+{% block body %}
+{% include "partials/customer_nav.html" %}
+<main class="container py-4" data-track-url="{% url 'orders:track' order.order_number %}">
+  <div class="d-flex flex-wrap justify-content-between align-items-center gap-2 mb-4">
+    <div>
+      <h1 class="h3 mb-1">Track your order</h1>
+      <p class="text-muted-2 mb-0">Order #{{ order.order_number }} • {{ order.restaurant.name }}</p>
+    </div>
+    <div class="text-end">
+      <div class="small text-muted-2">Current status</div>
+      <div class="fw-bold" data-track-status>{{ order.status_label }}</div>
+    </div>
+  </div>
+
+  <div class="row g-4">
+    <div class="col-lg-7">
+      <section class="fd-card fd-card-body">
+        <div class="d-flex justify-content-between small text-muted-2 mb-2">
+          <span>Order placed</span>
+          <span>{{ order.progress_percent }}% complete</span>
+        </div>
+        <div class="fd-progress-thin mb-4"><span data-track-progress style="width:{{ order.progress_percent }}%"></span></div>
+
+        <ul class="fd-tracker">
+          {% for item in steps %}
+            {% with label=item.0 state=item.1 history=item.2 %}
+              <li class="{{ state }}" data-track-step="{{ label }}">
+                <span class="fd-track-dot">
+                  {% if state == 'done' %}<i class="bi bi-check-lg"></i>
+                  {% elif state == 'cancelled' %}<i class="bi bi-x-lg"></i>
+                  {% elif state == 'current' %}<i class="bi bi-record-circle"></i>
+                  {% else %}<i class="bi bi-circle"></i>{% endif %}
+                </span>
+                <div>
+                  <div class="fw-semibold">{{ label }}</div>
+                  <div class="small text-muted-2">
+                    {% if history %}{{ history.created_at|date:"d M Y, h:i A" }}{% if history.note %} • {{ history.note }}{% endif %}
+                    {% else %}Pending{% endif %}
+                  </div>
+                </div>
+              </li>
+            {% endwith %}
+          {% endfor %}
+        </ul>
+        <p class="small text-muted-2 mb-0"><i class="bi bi-arrow-repeat me-1"></i>This page refreshes automatically from the FOODIES database every 15 seconds.</p>
+      </section>
+    </div>
+
+    <div class="col-lg-5">
+      <section class="fd-card fd-card-body mb-3">
+        <h2 class="h6 fw-bold mb-3">Delivery partner</h2>
+        {% if order.delivery_boy %}
+          <div class="d-flex align-items-center gap-3">
+            {% if order.delivery_boy.profile_image %}
+              <img src="{{ order.delivery_boy.profile_image.url }}" class="fd-avatar fd-avatar-lg" alt="{{ order.delivery_boy.full_name }}">
+            {% else %}
+              <span class="fd-avatar fd-avatar-lg">{{ order.delivery_boy.initials }}</span>
+            {% endif %}
+            <div>
+              <div class="fw-bold">{{ order.delivery_boy.full_name }}</div>
+              <div class="small text-muted-2"><i class="bi bi-telephone me-1"></i>{{ order.delivery_boy.phone }}</div>
+              {% if order.delivery_boy.delivery_profile %}
+                <div class="small text-muted-2">{{ order.delivery_boy.delivery_profile.get_vehicle_type_display }} • {{ order.delivery_boy.delivery_profile.vehicle_number }}</div>
+              {% endif %}
+            </div>
+          </div>
+        {% else %}
+          <p class="small text-muted-2 mb-0">We will assign a delivery partner as soon as your food is ready for pickup.</p>
+        {% endif %}
+      </section>
+
+      <section class="fd-card fd-card-body mb-3">
+        <h2 class="h6 fw-bold mb-3">Restaurant</h2>
+        <div class="d-flex gap-3">
+          {% if order.restaurant.logo %}<img src="{{ order.restaurant.logo.url }}" class="fd-avatar" alt="">{% else %}<span class="fd-avatar">{{ order.restaurant.name|slice:":1" }}</span>{% endif %}
+          <div>
+            <div class="fw-bold">{{ order.restaurant.name }}</div>
+            <div class="small text-muted-2">{{ order.restaurant.address }}, {{ order.restaurant.area }}</div>
+            <div class="small text-muted-2"><i class="bi bi-telephone me-1"></i>{{ order.restaurant.phone }}</div>
+          </div>
+        </div>
+      </section>
+
+      <section class="fd-card fd-card-body">
+        <h2 class="h6 fw-bold mb-3">Delivering to</h2>
+        <div class="fw-bold small">{{ order.customer_name }}</div>
+        <div class="small text-muted-2">{{ order.delivery_address_text }}</div>
+        <div class="small text-muted-2"><i class="bi bi-telephone me-1"></i>{{ order.customer_phone }}</div>
+        <div class="fd-divider"></div>
+        <div class="d-flex justify-content-between"><span class="small text-muted-2">Order total</span><span class="fw-bold">₹{{ order.total_amount|floatformat:2 }}</span></div>
+        <div class="d-flex justify-content-between"><span class="small text-muted-2">Payment</span><span class="small">{{ order.get_payment_status_display }}</span></div>
+        <a class="btn btn-soft w-100 mt-3" href="{% url 'orders:detail' order.order_number %}">View full order</a>
+      </section>
+    </div>
+  </div>
+</main>
+{% include "partials/footer.html" %}
+{% endblock %}

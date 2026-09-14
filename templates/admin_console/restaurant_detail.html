@@ -1,0 +1,120 @@
+{% extends "admin_console/base.html" %}
+{% load foodies_extras %}
+{% block title %}{{ restaurant.name }} — FOODIES Admin{% endblock %}
+{% block page_heading %}{{ restaurant.name }}{% endblock %}
+
+{% block content %}
+<div class="row g-3 mb-4">
+  <div class="col-lg-8">
+    <div class="fd-card overflow-hidden">
+      {% if restaurant.cover_image %}
+        <img src="{{ restaurant.cover_image.url }}" class="fd-cover-img" alt="">
+      {% else %}
+        <div class="bg-soft d-grid" style="height:200px;place-items:center;font-size:3rem">🏪</div>
+      {% endif %}
+      <div class="fd-card-body">
+        <div class="d-flex flex-wrap gap-3 align-items-center">
+          {% if restaurant.logo %}<img src="{{ restaurant.logo.url }}" class="fd-avatar fd-avatar-lg" alt="">{% else %}<span class="fd-avatar fd-avatar-lg">{{ restaurant.name|slice:":1" }}</span>{% endif %}
+          <div class="flex-grow-1">
+            <h2 class="h5 mb-1">{{ restaurant.name }}
+              {% if restaurant.is_approved %}<span class="fd-badge fd-badge-delivered">Approved</span>{% else %}<span class="fd-badge fd-badge-placed">Pending</span>{% endif %}
+              {% if restaurant.is_open %}<span class="fd-badge fd-badge-open">Open</span>{% else %}<span class="fd-badge fd-badge-closed">Closed</span>{% endif %}
+            </h2>
+            <div class="small text-muted-2">{{ restaurant.cuisine_type }}</div>
+            <div class="small text-muted-2">{{ restaurant.address }}, {{ restaurant.area }}, {{ restaurant.city }} - {{ restaurant.pincode }}</div>
+            <div class="small text-muted-2"><i class="bi bi-person me-1"></i>{{ restaurant.owner.full_name }} ({{ restaurant.owner.email }}) • <i class="bi bi-telephone ms-2 me-1"></i>{{ restaurant.phone }}</div>
+            <div class="small text-muted-2">Delivery {{ restaurant.delivery_time }} min • Fee {{ restaurant.delivery_fee|inr }} • Min order {{ restaurant.minimum_order|inr }}</div>
+          </div>
+        </div>
+        <div class="d-flex gap-2 mt-3 flex-wrap">
+          {% if not restaurant.is_approved %}
+            <form method="post" action="{% url 'dashboard:admin_approve_restaurant' restaurant.pk %}">
+              {% csrf_token %}<input type="hidden" name="next" value="{% url 'dashboard:admin_restaurant_detail' restaurant.pk %}">
+              <button class="btn btn-brand btn-sm" type="submit">Approve</button>
+            </form>
+            <form method="post" action="{% url 'dashboard:admin_reject_restaurant' restaurant.pk %}">
+              {% csrf_token %}<input type="hidden" name="next" value="{% url 'dashboard:admin_restaurant_detail' restaurant.pk %}">
+              <button class="btn btn-outline-danger btn-sm" type="submit">Reject</button>
+            </form>
+          {% endif %}
+          <form method="post" action="{% url 'dashboard:admin_toggle_restaurant' restaurant.pk %}">
+            {% csrf_token %}<input type="hidden" name="next" value="{% url 'dashboard:admin_restaurant_detail' restaurant.pk %}">
+            <button class="btn btn-soft btn-sm" type="submit">{% if restaurant.is_open %}Close restaurant{% else %}Open restaurant{% endif %}</button>
+          </form>
+          <a class="btn btn-light btn-sm" href="{% url 'restaurants:detail' restaurant.slug %}" target="_blank">View public page</a>
+        </div>
+      </div>
+    </div>
+  </div>
+  <div class="col-lg-4">
+    <div class="row g-3">
+      <div class="col-6"><div class="fd-stat-card"><div class="fd-stat-value">{{ order_count }}</div><div class="fd-stat-label">Orders</div></div></div>
+      <div class="col-6"><div class="fd-stat-card green"><div class="fd-stat-value">{{ revenue|inr:0 }}</div><div class="fd-stat-label">Revenue</div></div></div>
+      <div class="col-6"><div class="fd-stat-card amber"><div class="fd-stat-value">{{ menu_items|length }}</div><div class="fd-stat-label">Menu items</div></div></div>
+      <div class="col-6"><div class="fd-stat-card violet"><div class="fd-stat-value">{{ restaurant.rating|default:"—" }}</div><div class="fd-stat-label">{{ restaurant.rating_count }} reviews</div></div></div>
+    </div>
+  </div>
+</div>
+
+<div class="row g-3">
+  <div class="col-lg-7">
+    <div class="fd-card fd-card-body">
+      <h2 class="h6 fw-bold mb-3">Recent orders</h2>
+      <div class="fd-table-scroll">
+        <table class="fd-table">
+          <thead><tr><th>Order</th><th>Customer</th><th>Amount</th><th>Status</th><th>Date</th></tr></thead>
+          <tbody>
+            {% for order in orders %}
+              <tr>
+                <td><a href="{% url 'dashboard:admin_order_detail' order.order_number %}">#{{ order.order_number }}</a></td>
+                <td class="small">{{ order.customer.full_name|truncatechars:16 }}</td>
+                <td class="fw-semibold">{{ order.total_amount|inr }}</td>
+                <td><span class="fd-badge {{ order.order_status|status_class }}">{{ order.status_label }}</span></td>
+                <td class="small text-muted-2">{{ order.created_at|date:"d M, h:i A" }}</td>
+              </tr>
+            {% empty %}
+              <tr><td colspan="5" class="text-center text-muted-2 py-4">No orders yet.</td></tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+  <div class="col-lg-5">
+    <div class="fd-card fd-card-body">
+      <h2 class="h6 fw-bold mb-3">Menu ({{ menu_items|length }} items)</h2>
+      <div style="max-height:420px;overflow:auto">
+        {% for item in menu_items %}
+          <div class="fd-list-row">
+            <span class="fd-veg-dot {% if not item.is_veg %}nonveg{% endif %}"></span>
+            <div class="flex-grow-1">
+              <div class="fw-semibold small">{{ item.name|truncatechars:24 }}</div>
+              <div class="text-muted-2" style="font-size:.72rem">{{ item.category.name }}</div>
+            </div>
+            <span class="fw-bold small">{{ item.final_price|inr:0 }}</span>
+            {% if item.is_available %}<span class="fd-badge fd-badge-delivered">On</span>{% else %}<span class="fd-badge fd-badge-cancelled">Off</span>{% endif %}
+          </div>
+        {% empty %}
+          <p class="small text-muted-2 mb-0">This restaurant has not added any dishes yet.</p>
+        {% endfor %}
+      </div>
+    </div>
+  </div>
+</div>
+
+{% if reviews %}
+<div class="fd-card fd-card-body mt-3">
+  <h2 class="h6 fw-bold mb-3">Latest reviews</h2>
+  {% for review in reviews %}
+    <div class="fd-list-row">
+      <span class="fd-stars">{{ review.rating|star_rating }}</span>
+      <div class="flex-grow-1">
+        <div class="small fw-semibold">{{ review.customer.full_name }}</div>
+        <div class="small text-muted-2">{{ review.comment|default:"No comment"|truncatechars:110 }}</div>
+      </div>
+      <span class="small text-muted-2">{{ review.created_at|date:"d M Y" }}</span>
+    </div>
+  {% endfor %}
+</div>
+{% endif %}
+{% endblock %}

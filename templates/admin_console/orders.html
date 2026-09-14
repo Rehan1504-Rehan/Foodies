@@ -1,0 +1,75 @@
+{% extends "admin_console/base.html" %}
+{% load foodies_extras %}
+{% block title %}Orders — FOODIES Admin{% endblock %}
+{% block page_heading %}Order management{% endblock %}
+
+{% block content %}
+<div class="row g-2 mb-3">
+  {% for value, label in statuses %}
+    <div class="col-6 col-md-3 col-xl-2">
+      <a class="fd-card fd-card-body d-block h-100 text-center {% if status == value %}border-primary{% endif %}" href="?status={{ value }}">
+        <div class="fw-bold fs-5">{{ counts|get_item:value|default:0 }}</div>
+        <div class="text-muted-2" style="font-size:.72rem">{{ label }}</div>
+      </a>
+    </div>
+  {% endfor %}
+</div>
+
+<div class="fd-card fd-card-body mb-3">
+  <form class="row g-2 align-items-end" method="get">
+    <div class="col-md-5">
+      <label class="form-label small" for="q">Search orders</label>
+      <input class="form-control" id="q" type="search" name="q" value="{{ q }}" placeholder="Order number, customer email or restaurant">
+    </div>
+    <div class="col-md-4">
+      <label class="form-label small" for="status">Status</label>
+      <select class="form-select" id="status" name="status">
+        <option value="">All statuses</option>
+        {% for value, label in statuses %}<option value="{{ value }}" {% if status == value %}selected{% endif %}>{{ label }}</option>{% endfor %}
+      </select>
+    </div>
+    <div class="col-md-3 d-flex gap-2">
+      <button class="btn btn-brand flex-grow-1" type="submit">Filter</button>
+      <a class="btn btn-light" href="{% url 'dashboard:admin_orders' %}">Reset</a>
+    </div>
+  </form>
+</div>
+
+<div class="fd-table-wrap">
+  <div class="fd-table-scroll">
+    <table class="fd-table">
+      <thead><tr><th>Order</th><th>Customer</th><th>Restaurant</th><th>Delivery partner</th><th>Amount</th><th>Payment</th><th>Status</th><th>Placed</th><th></th></tr></thead>
+      <tbody>
+        {% for order in orders %}
+          <tr>
+            <td class="fw-semibold"><a href="{% url 'dashboard:admin_order_detail' order.order_number %}">#{{ order.order_number }}</a></td>
+            <td>
+              <div class="small fw-semibold">{{ order.customer.full_name|truncatechars:16 }}</div>
+              <div class="text-muted-2" style="font-size:.72rem">{{ order.customer_phone }}</div>
+            </td>
+            <td class="small">{{ order.restaurant.name|truncatechars:18 }}</td>
+            <td class="small">
+              {% if order.delivery_boy %}{{ order.delivery_boy.full_name|truncatechars:14 }}
+              {% else %}<span class="fd-badge fd-badge-placed">Unassigned</span>{% endif %}
+            </td>
+            <td class="fw-bold">{{ order.total_amount|inr }}</td>
+            <td><span class="fd-badge {{ order.payment_status|status_class }}">{{ order.get_payment_status_display }}</span></td>
+            <td><span class="fd-badge {{ order.order_status|status_class }}">{{ order.status_label }}</span></td>
+            <td class="small text-muted-2">{{ order.created_at|date:"d M, h:i A" }}</td>
+            <td class="text-end">
+              <div class="d-flex gap-1 justify-content-end">
+                <a class="btn btn-sm btn-soft" href="{% url 'dashboard:admin_order_detail' order.order_number %}">Manage</a>
+                {% if order.order_status == 'READY_FOR_PICKUP' and not order.delivery_boy %}
+                  <a class="btn btn-sm btn-brand" href="{% url 'dashboard:admin_delivery_assignments' %}">Assign</a>
+                {% endif %}
+              </div>
+            </td>
+          </tr>
+        {% empty %}
+          <tr><td colspan="9" class="text-center text-muted-2 py-5">No orders match these filters.</td></tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+{% endblock %}

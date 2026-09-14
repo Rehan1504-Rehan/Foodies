@@ -1,0 +1,37 @@
+{% extends "partials/base.html" %}
+{% load static foodies_extras %}
+{% block title %}Food categories — FOODIES{% endblock %}
+
+{% block body %}
+{% include "partials/customer_nav.html" %}
+<main class="container py-4">
+  <div class="mb-4">
+    <h1 class="h3 mb-1">Browse by category</h1>
+    <p class="text-muted-2 mb-0">From quick bites to full thalis — every category on FOODIES.</p>
+  </div>
+
+  <div class="row g-3">
+    {% for category in categories %}
+      <div class="col-6 col-md-4 col-lg-3">
+        <a href="{% url 'menu:category' category.slug %}" class="fd-card fd-card-hover h-100 overflow-hidden d-block">
+          <div class="fd-restaurant-media" style="aspect-ratio:16/9">
+            {% if category.image %}
+              <img src="{{ category.image.url }}" alt="{{ category.name }}" loading="lazy">
+            {% else %}
+              <div class="d-grid h-100" style="place-items:center;font-size:3rem;background:var(--fd-primary-soft)">{{ category.emoji }}</div>
+            {% endif %}
+          </div>
+          <div class="fd-card-body">
+            <h2 class="h6 fw-bold mb-1">{{ category.name }}</h2>
+            <p class="small text-muted-2 mb-0">{{ category.description|default:"Explore dishes in this category"|truncatechars:58 }}</p>
+            <span class="fd-badge fd-badge-soft mt-2">{{ category.item_count }} available</span>
+          </div>
+        </a>
+      </div>
+    {% empty %}
+      <div class="col-12">{% include "partials/empty.html" with icon="🥘" title="No categories yet" message="The FOODIES team is still setting up the menu." %}</div>
+    {% endfor %}
+  </div>
+</main>
+{% include "partials/footer.html" %}
+{% endblock %}

@@ -1,0 +1,34 @@
+{% extends "partials/base.html" %}
+{% load static %}
+{% block title %}{% if address %}Edit address{% else %}Add address{% endif %} — FOODIES{% endblock %}
+
+{% block body %}
+{% include "partials/customer_nav.html" %}
+<main class="container py-4">
+  <div class="row justify-content-center">
+    <div class="col-lg-7">
+      <div class="fd-card fd-card-body">
+        <h1 class="h4 mb-4">{% if address %}Edit address{% else %}Add a new address{% endif %}</h1>
+        <form method="post">
+          {% csrf_token %}
+          <div class="row g-3">
+            {% for field in form %}
+              <div class="col-md-6">
+                <label class="form-label" for="{{ field.id_for_label }}">{{ field.label }}{% if field.field.required %} <span class="text-danger">*</span>{% endif %}</label>
+                {{ field }}
+                {% if field.help_text %}<div class="form-text">{{ field.help_text }}</div>{% endif %}
+                {% for error in field.errors %}<div class="text-danger small">{{ error }}</div>{% endfor %}
+              </div>
+            {% endfor %}
+          </div>
+          <div class="d-flex gap-2 mt-4">
+            <button class="btn btn-brand" type="submit"><i class="bi bi-check2 me-1"></i>Save address</button>
+            <a class="btn btn-light" href="{% url 'accounts:addresses' %}">Cancel</a>
+          </div>
+        </form>
+      </div>
+    </div>
+  </div>
+</main>
+{% include "partials/footer.html" %}
+{% endblock %}

@@ -1,0 +1,58 @@
+{% extends "partials/base.html" %}
+{% load static %}
+{% block title %}Contact &amp; support — FOODIES{% endblock %}
+
+{% block body %}
+{% include "partials/customer_nav.html" %}
+<main class="container py-4">
+  <div class="row g-4">
+    <div class="col-lg-7">
+      <div class="fd-card fd-card-body">
+        <h1 class="h4 mb-3">We are here to help</h1>
+        <p class="text-muted-2">Order issue, refund, restaurant partnership or rider support — reach the FOODIES team any time.</p>
+        <div class="row g-3 mt-2">
+          <div class="col-md-6">
+            <div class="fd-card fd-card-body h-100">
+              <i class="bi bi-envelope fs-4 text-primary-brand"></i>
+              <h2 class="h6 fw-bold mt-2">Email</h2>
+              <p class="small text-muted-2 mb-0">support@foodies.test<br>partners@foodies.test</p>
+            </div>
+          </div>
+          <div class="col-md-6">
+            <div class="fd-card fd-card-body h-100">
+              <i class="bi bi-telephone fs-4 text-primary-brand"></i>
+              <h2 class="h6 fw-bold mt-2">Phone</h2>
+              <p class="small text-muted-2 mb-0">1800-FOODIES<br>Mon–Sun, 8 AM to 11 PM</p>
+            </div>
+          </div>
+          <div class="col-md-6">
+            <div class="fd-card fd-card-body h-100">
+              <i class="bi bi-shop fs-4 text-primary-brand"></i>
+              <h2 class="h6 fw-bold mt-2">Restaurant partners</h2>
+              <p class="small text-muted-2 mb-0"><a href="{% url 'accounts:register_restaurant' %}">Register your restaurant</a> and our team will review it.</p>
+            </div>
+          </div>
+          <div class="col-md-6">
+            <div class="fd-card fd-card-body h-100">
+              <i class="bi bi-scooter fs-4 text-primary-brand"></i>
+              <h2 class="h6 fw-bold mt-2">Delivery partners</h2>
+              <p class="small text-muted-2 mb-0"><a href="{% url 'accounts:register_delivery' %}">Join as a rider</a> and start earning per delivery.</p>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="col-lg-5">
+      <div class="fd-card fd-card-body h-100">
+        <h2 class="h6 fw-bold mb-3">Frequently asked</h2>
+        <details class="mb-2"><summary class="fw-semibold">How do I track my order?</summary><p class="small text-muted-2 mt-2 mb-0">Open My Orders → Track. The page reads the live status from our database and refreshes automatically.</p></details>
+        <details class="mb-2"><summary class="fw-semibold">Can I cancel an order?</summary><p class="small text-muted-2 mt-2 mb-0">Yes — until the order is picked up by a delivery partner. Cancelling from the order page updates the database instantly.</p></details>
+        <details class="mb-2"><summary class="fw-semibold">How do coupons work?</summary><p class="small text-muted-2 mt-2 mb-0">Apply a code in your cart. Minimum order, expiry and maximum discount are validated on the server before the discount is applied.</p></details>
+        <details class="mb-2"><summary class="fw-semibold">When can I review a restaurant?</summary><p class="small text-muted-2 mt-2 mb-0">Only after an order has actually been delivered to you — that keeps ratings honest.</p></details>
+        <details><summary class="fw-semibold">Which payments are supported?</summary><p class="small text-muted-2 mt-2 mb-0">Cash on delivery always, plus online payments through Razorpay when the gateway keys are configured.</p></details>
+      </div>
+    </div>
+  </div>
+</main>
+{% include "partials/footer.html" %}
+{% endblock %}

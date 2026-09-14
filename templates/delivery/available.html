@@ -1,0 +1,52 @@
+{% extends "delivery/base.html" %}
+{% load foodies_extras %}
+{% block title %}Available deliveries — FOODIES Partner{% endblock %}
+{% block page_heading %}Available deliveries{% endblock %}
+
+{% block content %}
+{% if not profile.is_approved %}
+  <div class="alert alert-warning rounded-3">Your account is pending approval — you cannot accept deliveries yet.</div>
+{% elif not profile.is_online %}
+  <div class="alert alert-light rounded-3 d-flex justify-content-between align-items-center flex-wrap gap-2">
+    <span>You are offline. Go online to accept deliveries.</span>
+    <form method="post" action="{% url 'delivery:toggle_availability' %}">{% csrf_token %}<button class="btn btn-brand btn-sm" type="submit">Go online</button></form>
+  </div>
+{% endif %}
+
+<div class="row g-3">
+  {% for order in orders %}
+    <div class="col-md-6 col-xl-4">
+      <div class="fd-card fd-card-body h-100">
+        <div class="d-flex justify-content-between">
+          <div>
+            <div class="fw-bold">#{{ order.order_number }}</div>
+            <span class="fd-badge fd-badge-ready">Ready for pickup</span>
+          </div>
+          <div class="text-end">
+            <div class="fw-bold">{{ order.total_amount|inr }}</div>
+            <div class="small text-muted-2">{{ order.get_payment_status_display }}</div>
+          </div>
+        </div>
+        <div class="fd-divider"></div>
+        <div class="small mb-2"><i class="bi bi-shop me-1 text-primary-brand"></i><strong>{{ order.restaurant.name }}</strong><br><span class="text-muted-2">{{ order.restaurant.address }}, {{ order.restaurant.area }}, {{ order.restaurant.city }}</span></div>
+        <div class="small mb-2"><i class="bi bi-person me-1 text-primary-brand"></i>{{ order.customer_name }}</div>
+        <div class="small mb-3"><i class="bi bi-geo-alt me-1 text-primary-brand"></i>{{ order.delivery_address_text|truncatechars:80 }}</div>
+        <div class="d-flex justify-content-between small text-muted-2 mb-3">
+          <span>{{ order.items_total_quantity }} items</span>
+          <span>{{ order.restaurant.delivery_time }} min ride</span>
+        </div>
+        <form method="post" action="{% url 'delivery:claim' order.order_number %}">
+          {% csrf_token %}
+          <button class="btn btn-brand w-100" type="submit" {% if not profile.is_approved or not profile.is_online %}disabled{% endif %}>
+            <i class="bi bi-hand-index-thumb me-1"></i>Accept delivery
+          </button>
+        </form>
+      </div>
+    </div>
+  {% empty %}
+    <div class="col-12">
+      {% include "partials/empty.html" with icon="📦" title="No deliveries available" message="New deliveries appear here the moment restaurants mark orders ready for pickup." %}
+    </div>
+  {% endfor %}
+</div>
+{% endblock %}

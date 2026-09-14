@@ -1,0 +1,50 @@
+{% extends "partials/base.html" %}
+{% load static foodies_extras %}
+{% block title %}My addresses — FOODIES{% endblock %}
+
+{% block body %}
+{% include "partials/customer_nav.html" %}
+<main class="container py-4">
+  <div class="d-flex justify-content-between align-items-center mb-4">
+    <div>
+      <h1 class="h3 mb-1">My addresses</h1>
+      <p class="text-muted-2 mb-0">Manage where FOODIES should deliver your orders.</p>
+    </div>
+    <a class="btn btn-brand" href="{% url 'accounts:address_create' %}"><i class="bi bi-plus-lg me-1"></i>Add address</a>
+  </div>
+
+  <div class="row g-3">
+    {% for address in addresses %}
+      <div class="col-md-6 col-lg-4">
+        <div class="fd-card fd-card-body h-100">
+          <div class="d-flex justify-content-between align-items-start mb-2">
+            <span class="fd-badge fd-badge-soft">{{ address.get_address_type_display }}</span>
+            {% if address.is_default %}<span class="fd-badge fd-badge-delivered">Default</span>{% endif %}
+          </div>
+          <h2 class="h6 fw-bold mb-1">{{ address.full_name }}</h2>
+          <p class="small text-muted-2 mb-1">{{ address.full_address }}</p>
+          <p class="small text-muted-2 mb-3"><i class="bi bi-telephone me-1"></i>{{ address.phone }}</p>
+          <div class="d-flex gap-2 flex-wrap">
+            <a class="btn btn-sm btn-soft" href="{% url 'accounts:address_edit' address.pk %}"><i class="bi bi-pencil me-1"></i>Edit</a>
+            {% if not address.is_default %}
+              <form method="post" action="{% url 'accounts:address_default' address.pk %}">
+                {% csrf_token %}
+                <button class="btn btn-sm btn-light" type="submit">Set default</button>
+              </form>
+            {% endif %}
+            <form method="post" action="{% url 'accounts:address_delete' address.pk %}" data-confirm="Delete this address?" data-confirm-title="Delete address">
+              {% csrf_token %}
+              <button class="btn btn-sm btn-outline-danger" type="submit"><i class="bi bi-trash3"></i></button>
+            </form>
+          </div>
+        </div>
+      </div>
+    {% empty %}
+      <div class="col-12">
+        {% include "partials/empty.html" with icon="📍" title="No saved addresses" message="Add your home or work address to speed up checkout." action_url="/accounts/addresses/new/" action_label="Add your first address" %}
+      </div>
+    {% endfor %}
+  </div>
+</main>
+{% include "partials/footer.html" %}
+{% endblock %}

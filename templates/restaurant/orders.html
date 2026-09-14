@@ -1,0 +1,79 @@
+{% extends "restaurant/base.html" %}
+{% load foodies_extras %}
+{% block title %}Orders — {{ restaurant.name }}{% endblock %}
+{% block page_heading %}Order management{% endblock %}
+
+{% block content %}
+<ul class="nav nav-pills gap-2 mb-3 flex-wrap">
+  <li class="nav-item"><a class="nav-link rounded-pill {% if status == 'active' %}active{% endif %}" href="?status=active">Active ({{ active_count }})</a></li>
+  <li class="nav-item"><a class="nav-link rounded-pill {% if status == 'new' %}active{% endif %}" href="?status=new">New ({{ counts|get_item:'PLACED'|default:0 }})</a></li>
+  <li class="nav-item"><a class="nav-link rounded-pill {% if status == 'preparing' %}active{% endif %}" href="?status=preparing">Preparing ({{ counts|get_item:'PREPARING'|default:0 }})</a></li>
+  <li class="nav-item"><a class="nav-link rounded-pill {% if status == 'ready' %}active{% endif %}" href="?status=ready">Ready for pickup ({{ counts|get_item:'READY_FOR_PICKUP'|default:0 }})</a></li>
+  <li class="nav-item"><a class="nav-link rounded-pill {% if status == 'completed' %}active{% endif %}" href="?status=completed">Completed ({{ counts|get_item:'DELIVERED'|default:0 }})</a></li>
+  <li class="nav-item"><a class="nav-link rounded-pill {% if status == 'cancelled' %}active{% endif %}" href="?status=cancelled">Cancelled ({{ counts|get_item:'CANCELLED'|default:0 }})</a></li>
+</ul>
+
+{% for order in orders %}
+  <div class="fd-card fd-card-body mb-3">
+    <div class="d-flex flex-wrap justify-content-between gap-2">
+      <div>
+        <div class="d-flex align-items-center gap-2 flex-wrap">
+          <h2 class="h6 fw-bold mb-0">#{{ order.order_number }}</h2>
+          <span class="fd-badge {{ order.order_status|status_class }}">{{ order.status_label }}</span>
+          <span class="fd-badge {{ order.payment_status|status_class }}">{{ order.get_payment_status_display }}</span>
+        </div>
+        <div class="small text-muted-2 mt-1">
+          {{ order.customer_name }} • {{ order.customer_phone }} • {{ order.created_at|date:"d M, h:i A" }} ({{ order.created_at|timesince }} ago)
+        </div>
+        <div class="small text-muted-2">{{ order.delivery_address_text|truncatechars:90 }}</div>
+        {% if order.special_instructions %}<div class="small text-primary-brand">Note: {{ order.special_instructions }}</div>{% endif %}
+      </div>
+      <div class="text-end">
+        <div class="fw-bold fs-5">{{ order.total_amount|inr }}</div>
+        <div class="small text-muted-2">{{ order.items_total_quantity }} items • payout {{ order.restaurant_earning|inr:0 }}</div>
+        {% if order.delivery_boy %}<div class="small text-muted-2"><i class="bi bi-scooter me-1"></i>{{ order.delivery_boy.full_name }}</div>{% endif %}
+      </div>
+    </div>
+
+    <div class="fd-divider my-2"></div>
+    <div class="small text-muted-2 mb-3">
+      {% for item in order.items.all %}
+        <span class="me-2"><span class="fd-veg-dot {% if not item.is_veg %}nonveg{% endif %}"></span> {{ item.quantity }} × {{ item.food_name }}</span>
+      {% endfor %}
+    </div>
+
+    <div class="d-flex flex-wrap gap-2">
+      {% if order.order_status == 'PLACED' %}
+        <form method="post" action="{% url 'dashboard:restaurant_order_action' order.order_number 'accept' %}">
+          {% csrf_token %}<input type="hidden" name="next" value="{% url 'dashboard:restaurant_orders' %}?status={{ status }}">
+          <button class="btn btn-brand btn-sm" type="submit"><i class="bi bi-check2-circle me-1"></i>Accept order</button>
+        </form>
+        <form method="post" action="{% url 'dashboard:restaurant_order_action' order.order_number 'reject' %}" class="d-flex gap-1"
+              data-confirm="Reject order #{{ order.order_number }}? The customer is notified immediately." data-confirm-title="Reject order">
+          {% csrf_token %}
+          <input type="hidden" name="next" value="{% url 'dashboard:restaurant_orders' %}?status={{ status }}">
+          <input class="form-control form-control-sm" name="reason" placeholder="Reason (optional)" style="max-width:180px">
+          <button class="btn btn-outline-danger btn-sm" type="submit">Reject</button>
+        </form>
+      {% elif order.order_status == 'CONFIRMED' %}
+        <form method="post" action="{% url 'dashboard:restaurant_order_action' order.order_number 'preparing' %}">
+          {% csrf_token %}<input type="hidden" name="next" value="{% url 'dashboard:restaurant_orders' %}?status={{ status }}">
+          <button class="btn btn-brand btn-sm" type="submit"><i class="bi bi-fire me-1"></i>Start preparing</button>
+        </form>
+      {% elif order.order_status == 'PREPARING' %}
+        <form method="post" action="{% url 'dashboard:restaurant_order_action' order.order_number 'ready' %}">
+          {% csrf_token %}<input type="hidden" name="next" value="{% url 'dashboard:restaurant_orders' %}?status={{ status }}">
+          <button class="btn btn-brand btn-sm" type="submit"><i class="bi bi-box-seam me-1"></i>Mark ready for pickup</button>
+        </form>
+      {% elif order.order_status == 'READY_FOR_PICKUP' %}
+        <span class="fd-badge fd-badge-ready align-self-center"><i class="bi bi-hourglass-split"></i> Waiting for delivery partner</span>
+      {% elif order.order_status == 'DELIVERED' %}
+        <span class="fd-badge fd-badge-delivered align-self-center">Completed {{ order.delivered_at|date:"d M, h:i A" }}</span>
+      {% endif %}
+      <a class="btn btn-sm btn-soft" href="{% url 'dashboard:restaurant_order_detail' order.order_number %}">View details</a>
+    </div>
+  </div>
+{% empty %}
+  {% include "partials/empty.html" with icon="📭" title="No orders in this view" message="New orders from customers appear here the second they are placed." %}
+{% endfor %}
+{% endblock %}

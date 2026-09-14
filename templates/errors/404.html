@@ -1,0 +1,20 @@
+{% extends "partials/base.html" %}
+{% load static %}
+{% block title %}404 — Page not found | FOODIES{% endblock %}
+{% block body %}
+{% include "partials/customer_nav.html" %}
+<main class="container py-5">
+  <div class="fd-card fd-card-body text-center" style="max-width:640px;margin:3rem auto">
+    <div class="fd-empty-icon mx-auto mb-3" style="width:110px;height:110px;font-size:3rem">🍽️</div>
+    <h1 class="display-5 fw-black mb-2">404</h1>
+    <h2 class="h4 mb-3">This dish is not on the menu</h2>
+    <p class="text-muted-2">The page you were looking for has been moved, renamed or never existed. Let's get you back to the good stuff.</p>
+    <div class="d-flex gap-2 justify-content-center flex-wrap mt-4">
+      <a class="btn btn-brand" href="{% url 'core:home' %}"><i class="bi bi-house-door me-1"></i>Go home</a>
+      <a class="btn btn-soft" href="{% url 'restaurants:list' %}"><i class="bi bi-shop me-1"></i>Browse restaurants</a>
+      <a class="btn btn-light" href="{% url 'core:search' %}"><i class="bi bi-search me-1"></i>Search food</a>
+    </div>
+  </div>
+</main>
+{% include "partials/footer.html" %}
+{% endblock %}

@@ -1,0 +1,52 @@
+{% extends "restaurant/base.html" %}
+{% load foodies_extras %}
+{% block title %}Sales — {{ restaurant.name }}{% endblock %}
+{% block page_heading %}Sales &amp; analytics{% endblock %}
+
+{% block content %}
+<div class="d-flex flex-wrap gap-2 mb-3">
+  <a class="fd-chip {% if days == 7 %}active{% endif %}" href="?days=7">Last 7 days</a>
+  <a class="fd-chip {% if days == 30 %}active{% endif %}" href="?days=30">Last 30 days</a>
+  <a class="fd-chip {% if days == 90 %}active{% endif %}" href="?days=90">Last 90 days</a>
+</div>
+
+<div class="row g-3 mb-4">
+  <div class="col-6 col-lg-3"><div class="fd-stat-card green"><div class="fd-stat-icon"><i class="bi bi-cash-stack"></i></div><div class="fd-stat-value">{{ summary.gross|inr:0 }}</div><div class="fd-stat-label">Gross sales</div></div></div>
+  <div class="col-6 col-lg-3"><div class="fd-stat-card"><div class="fd-stat-icon"><i class="bi bi-percent"></i></div><div class="fd-stat-value">{{ summary.commission|inr:0 }}</div><div class="fd-stat-label">FOODIES commission</div></div></div>
+  <div class="col-6 col-lg-3"><div class="fd-stat-card amber"><div class="fd-stat-icon"><i class="bi bi-wallet2"></i></div><div class="fd-stat-value">{{ summary.payout|inr:0 }}</div><div class="fd-stat-label">Net payout</div></div></div>
+  <div class="col-6 col-lg-3"><div class="fd-stat-card blue"><div class="fd-stat-icon"><i class="bi bi-receipt"></i></div><div class="fd-stat-value">{{ summary.orders }}</div><div class="fd-stat-label">{{ summary.delivered }} delivered • {{ summary.cancelled }} cancelled</div></div></div>
+</div>
+
+<div class="row g-3">
+  <div class="col-lg-8">
+    <div class="fd-card fd-card-body h-100">
+      <h2 class="h6 fw-bold mb-3">Daily revenue</h2>
+      <div class="fd-chart" style="height:220px">
+        {% for day in daily %}
+          <div class="fd-chart-bar" title="{{ day.label }}: {{ day.revenue|inr:0 }} • {{ day.orders }} orders">
+            <div class="fd-bar" style="height:{{ day.revenue|percent_of:max_revenue }}%"></div>
+            <span class="fd-bar-label" style="font-size:.62rem">{{ day.label|slice:":6" }}</span>
+          </div>
+        {% endfor %}
+      </div>
+      <p class="small text-muted-2 mt-3 mb-0">Average order value across the period: <strong>{{ summary.avg_order|inr }}</strong></p>
+    </div>
+  </div>
+  <div class="col-lg-4">
+    <div class="fd-card fd-card-body h-100">
+      <h2 class="h6 fw-bold mb-3">Best sellers</h2>
+      {% for item in top_items %}
+        <div class="fd-list-row">
+          <span class="fd-avatar">{{ forloop.counter }}</span>
+          <div class="flex-grow-1">
+            <div class="fw-semibold small">{{ item.name|truncatechars:20 }}</div>
+            <div class="text-muted-2" style="font-size:.72rem">{{ item.sold|default:0 }} sold • {{ item.revenue|default:0|inr:0 }}</div>
+          </div>
+        </div>
+      {% empty %}
+        <p class="small text-muted-2 mb-0">No sales in this period yet.</p>
+      {% endfor %}
+    </div>
+  </div>
+</div>
+{% endblock %}

@@ -1,0 +1,85 @@
+{% extends "restaurant/base.html" %}
+{% load static foodies_extras %}
+{% block title %}Menu — {{ restaurant.name }}{% endblock %}
+{% block page_heading %}Menu management{% endblock %}
+
+{% block content %}
+<div class="d-flex flex-wrap justify-content-between align-items-center gap-2 mb-3">
+  <div>
+    <h2 class="h5 mb-1">{{ restaurant.food_items.count }} dishes on your menu</h2>
+    <p class="small text-muted-2 mb-0">Prices and availability you set here are what customers see immediately.</p>
+  </div>
+  <a class="btn btn-brand" href="{% url 'dashboard:restaurant_food_create' %}"><i class="bi bi-plus-lg me-1"></i>Add dish</a>
+</div>
+
+<div class="fd-card fd-card-body mb-3">
+  <form class="row g-2 align-items-end" method="get">
+    <div class="col-md-4">
+      <label class="form-label small" for="q">Search dishes</label>
+      <input class="form-control" id="q" type="search" name="q" value="{{ selected.q }}" placeholder="Dish name or description">
+    </div>
+    <div class="col-md-3">
+      <label class="form-label small" for="category">Category</label>
+      <select class="form-select" id="category" name="category">
+        <option value="">All categories</option>
+        {% for category in categories %}<option value="{{ category.pk }}" {% if selected.category == category.pk|stringformat:"s" %}selected{% endif %}>{{ category.name }}</option>{% endfor %}
+      </select>
+    </div>
+    <div class="col-md-3">
+      <label class="form-label small" for="availability">Availability</label>
+      <select class="form-select" id="availability" name="availability">
+        <option value="">All</option>
+        <option value="available" {% if selected.availability == 'available' %}selected{% endif %}>Available</option>
+        <option value="unavailable" {% if selected.availability == 'unavailable' %}selected{% endif %}>Sold out</option>
+      </select>
+    </div>
+    <div class="col-md-2 d-flex gap-2">
+      <button class="btn btn-brand flex-grow-1" type="submit">Filter</button>
+      <a class="btn btn-light" href="{% url 'dashboard:restaurant_menu' %}">Reset</a>
+    </div>
+  </form>
+</div>
+
+<div class="row g-3">
+  {% for food in food_items %}
+    <div class="col-md-6 col-xl-4">
+      <div class="fd-card fd-card-body h-100">
+        <div class="d-flex gap-3">
+          {% if food.image %}<img src="{{ food.image.url }}" class="fd-food-thumb" style="width:84px;height:84px" alt="">{% else %}<span class="fd-food-thumb d-grid" style="width:84px;height:84px;place-items:center;font-size:1.6rem">🍽️</span>{% endif %}
+          <div class="flex-grow-1">
+            <div class="d-flex align-items-center gap-2">
+              <span class="fd-veg-dot {% if not food.is_veg %}nonveg{% endif %}"></span>
+              <span class="fw-bold small">{{ food.name|truncatechars:22 }}</span>
+            </div>
+            <div class="text-muted-2" style="font-size:.75rem">{{ food.category.name }} • {{ food.preparation_time }} min</div>
+            <div class="mt-1">
+              <span class="fw-bold">{{ food.final_price|inr:0 }}</span>
+              {% if food.has_discount %}<span class="fd-price-del ms-1" style="font-size:.75rem">{{ food.price|inr:0 }}</span>{% endif %}
+            </div>
+            <div class="mt-1">
+              {% if food.is_available %}<span class="fd-badge fd-badge-delivered">Available</span>{% else %}<span class="fd-badge fd-badge-cancelled">Sold out</span>{% endif %}
+              {% if food.is_recommended %}<span class="fd-badge fd-badge-soft">Featured</span>{% endif %}
+            </div>
+          </div>
+        </div>
+        <div class="d-flex gap-2 mt-3">
+          <a class="btn btn-sm btn-soft flex-grow-1" href="{% url 'dashboard:restaurant_food_edit' food.pk %}"><i class="bi bi-pencil me-1"></i>Edit</a>
+          <form method="post" action="{% url 'dashboard:restaurant_toggle_food' food.pk %}">
+            {% csrf_token %}
+            <input type="hidden" name="next" value="{% url 'dashboard:restaurant_menu' %}">
+            <button class="btn btn-sm btn-light" type="submit">{% if food.is_available %}Mark sold out{% else %}Make available{% endif %}</button>
+          </form>
+          <form method="post" action="{% url 'dashboard:restaurant_delete_food' food.pk %}" data-confirm="Delete {{ food.name }} from your menu?" data-confirm-title="Delete dish">
+            {% csrf_token %}
+            <button class="btn btn-sm btn-outline-danger" type="submit"><i class="bi bi-trash3"></i></button>
+          </form>
+        </div>
+      </div>
+    </div>
+  {% empty %}
+    <div class="col-12">
+      {% include "partials/empty.html" with icon="🍳" title="Your menu is empty" message="Add your first dish — it goes live for customers instantly." action_url="/restaurant-dashboard/menu/new/" action_label="Add your first dish" %}
+    </div>
+  {% endfor %}
+</div>
+{% endblock %}

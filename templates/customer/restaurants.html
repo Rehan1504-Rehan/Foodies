@@ -1,0 +1,73 @@
+{% extends "partials/base.html" %}
+{% load static foodies_extras %}
+{% block title %}Restaurants on FOODIES — {{ total }} kitchens{% endblock %}
+
+{% block body %}
+{% include "partials/customer_nav.html" %}
+<main class="container py-4">
+  <div class="d-flex flex-wrap justify-content-between align-items-end gap-3 mb-4">
+    <div>
+      <h1 class="h3 mb-1">Restaurants</h1>
+      <p class="text-muted-2 mb-0">{{ total }} approved kitchen{{ total|pluralize }} delivering with FOODIES.</p>
+    </div>
+    <form class="fd-search" action="{% url 'restaurants:list' %}" method="get">
+      <i class="bi bi-search text-muted-2"></i>
+      <input type="search" name="q" value="{{ selected.q }}" placeholder="Search restaurant or cuisine" aria-label="Search restaurants">
+      <input type="hidden" name="city" value="{{ selected.city }}">
+    </form>
+  </div>
+
+  <div class="fd-card p-3 mb-4">
+    <form method="get" class="row g-2 align-items-end">
+      <div class="col-6 col-md-3">
+        <label class="form-label small" for="f-city">City</label>
+        <select class="form-select" id="f-city" name="city">
+          <option value="">All cities</option>
+          {% for city in cities %}<option value="{{ city }}" {% if selected.city == city %}selected{% endif %}>{{ city }}</option>{% endfor %}
+        </select>
+      </div>
+      <div class="col-6 col-md-3">
+        <label class="form-label small" for="f-cuisine">Cuisine</label>
+        <select class="form-select" id="f-cuisine" name="cuisine">
+          <option value="">Any cuisine</option>
+          {% for cuisine in cuisines %}<option value="{{ cuisine }}" {% if selected.cuisine == cuisine %}selected{% endif %}>{{ cuisine }}</option>{% endfor %}
+        </select>
+      </div>
+      <div class="col-6 col-md-2">
+        <label class="form-label small" for="f-sort">Sort by</label>
+        <select class="form-select" id="f-sort" name="sort">
+          <option value="rating" {% if selected.sort == 'rating' %}selected{% endif %}>Top rated</option>
+          <option value="delivery_time" {% if selected.sort == 'delivery_time' %}selected{% endif %}>Fastest delivery</option>
+          <option value="delivery_fee" {% if selected.sort == 'delivery_fee' %}selected{% endif %}>Lowest fee</option>
+          <option value="newest" {% if selected.sort == 'newest' %}selected{% endif %}>Newest</option>
+          <option value="name" {% if selected.sort == 'name' %}selected{% endif %}>A → Z</option>
+        </select>
+      </div>
+      <div class="col-6 col-md-2">
+        <div class="form-check">
+          <input class="form-check-input" type="checkbox" name="veg" id="f-veg" {% if selected.veg %}checked{% endif %}>
+          <label class="form-check-label small" for="f-veg">Pure veg options</label>
+        </div>
+      </div>
+      <div class="col-md-2 d-flex gap-2">
+        <button class="btn btn-brand w-100" type="submit">Apply</button>
+        <a class="btn btn-light" href="{% url 'restaurants:list' %}" title="Reset">Reset</a>
+      </div>
+      <input type="hidden" name="q" value="{{ selected.q }}">
+    </form>
+  </div>
+
+  <div class="row g-4">
+    {% for restaurant in restaurants %}
+      <div class="col-md-6 col-lg-4">{% include "partials/restaurant_card.html" %}</div>
+    {% empty %}
+      <div class="col-12">
+        {% include "partials/empty.html" with icon="🔍" title="No restaurants match those filters" message="Try a different city, cuisine or clear the filters." action_url="/restaurants/" action_label="Show all restaurants" %}
+      </div>
+    {% endfor %}
+  </div>
+
+  {% include "partials/pagination.html" %}
+</main>
+{% include "partials/footer.html" %}
+{% endblock %}

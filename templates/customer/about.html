@@ -1,0 +1,72 @@
+{% extends "partials/base.html" %}
+{% load static %}
+{% block title %}About FOODIES — Good Food. Great Mood.{% endblock %}
+
+{% block body %}
+{% include "partials/customer_nav.html" %}
+<main class="container py-4">
+  <section class="fd-hero mb-4">
+    <div class="fd-hero-media" style="background-image:url('{% static 'images/hero-food.jpg' %}')"></div>
+    <div class="fd-hero-content">
+      <span class="fd-pill mb-3">🍔 Our story</span>
+      <h1 class="mb-3">Food deserves to arrive happy</h1>
+      <p class="text-white-50 mb-0" style="max-width:620px">
+        FOODIES is an original food-delivery platform built for local kitchens. We connect hungry people
+        with the restaurants they love, keep pricing honest and give every partner — restaurant owners and
+        delivery riders — the tools to grow.
+      </p>
+    </div>
+  </section>
+
+  <div class="row g-4 mb-4">
+    <div class="col-md-4">
+      <div class="fd-card fd-card-body h-100">
+        <div class="fd-stat-icon"><i class="bi bi-bullseye"></i></div>
+        <h2 class="h5">Our mission</h2>
+        <p class="text-muted-2 small mb-0">Make great local food accessible within minutes, with transparent pricing and reliable delivery for every order.</p>
+      </div>
+    </div>
+    <div class="col-md-4">
+      <div class="fd-card fd-card-body h-100">
+        <div class="fd-stat-icon" style="background:var(--fd-secondary-soft);color:var(--fd-secondary)"><i class="bi bi-people"></i></div>
+        <h2 class="h5">Four interfaces, one platform</h2>
+        <p class="text-muted-2 small mb-0">Customers, restaurant owners, delivery partners and administrators each get a purpose-built dashboard on the same Django backend and database.</p>
+      </div>
+    </div>
+    <div class="col-md-4">
+      <div class="fd-card fd-card-body h-100">
+        <div class="fd-stat-icon" style="background:var(--fd-accent-soft);color:#b45309"><i class="bi bi-shield-check"></i></div>
+        <h2 class="h5">Built responsibly</h2>
+        <p class="text-muted-2 small mb-0">Server-side pricing, role-based permissions, hashed passwords and real database transactions on every checkout.</p>
+      </div>
+    </div>
+  </div>
+
+  <section class="fd-card fd-card-body">
+    <h2 class="h4 mb-3">How FOODIES works</h2>
+    <div class="row g-4">
+      <div class="col-md-3">
+        <div class="fd-chip mb-2">Step 1</div>
+        <h3 class="h6 fw-bold">Browse &amp; discover</h3>
+        <p class="small text-muted-2 mb-0">Filter by cuisine, rating, delivery time or pure-veg and see only approved kitchens.</p>
+      </div>
+      <div class="col-md-3">
+        <div class="fd-chip mb-2">Step 2</div>
+        <h3 class="h6 fw-bold">Add to cart</h3>
+        <p class="small text-muted-2 mb-0">Your cart lives in our database — prices, taxes and coupons are always recalculated on the server.</p>
+      </div>
+      <div class="col-md-3">
+        <div class="fd-chip mb-2">Step 3</div>
+        <h3 class="h6 fw-bold">Restaurant cooks</h3>
+        <p class="small text-muted-2 mb-0">The kitchen accepts your order, prepares it and marks it ready for pickup.</p>
+      </div>
+      <div class="col-md-3">
+        <div class="fd-chip mb-2">Step 4</div>
+        <h3 class="h6 fw-bold">Track to your door</h3>
+        <p class="small text-muted-2 mb-0">A delivery partner is assigned and you can follow every status change live.</p>
+      </div>
+    </div>
+  </section>
+</main>
+{% include "partials/footer.html" %}
+{% endblock %}

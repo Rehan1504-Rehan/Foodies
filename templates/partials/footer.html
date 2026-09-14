@@ -1,0 +1,57 @@
+{% load static %}
+<footer class="fd-footer">
+  <div class="container">
+    <div class="row g-4">
+      <div class="col-lg-4">
+        <a class="fd-brand text-white mb-3 d-inline-flex" href="{% url 'core:home' %}">
+          <span class="fd-brand-mark">🍔</span>
+          <span>{{ SITE_NAME }}<small class="text-white-50">Good Food. Great Mood.</small></span>
+        </a>
+        <p class="small mb-3">FOODIES brings your favourite local kitchens together in one place — fast delivery, honest pricing and food you will crave again.</p>
+        <div class="d-flex gap-2">
+          <a class="fd-social" href="{% url 'core:contact' %}" aria-label="Support"><i class="bi bi-headset"></i></a>
+          <a class="fd-social" href="{% url 'core:about' %}" aria-label="About"><i class="bi bi-info-circle"></i></a>
+          <a class="fd-social" href="{% url 'core:offers' %}" aria-label="Offers"><i class="bi bi-ticket-perforated"></i></a>
+          <a class="fd-social" href="{% url 'core:search' %}" aria-label="Search"><i class="bi bi-search"></i></a>
+        </div>
+      </div>
+      <div class="col-6 col-lg-2">
+        <h6 class="mb-3">Explore</h6>
+        <ul class="list-unstyled small d-grid gap-2">
+          <li><a href="{% url 'restaurants:list' %}">Restaurants</a></li>
+          <li><a href="{% url 'menu:list' %}">Categories</a></li>
+          <li><a href="{% url 'core:offers' %}">Offers &amp; Coupons</a></li>
+          <li><a href="{% url 'core:search' %}">Search food</a></li>
+          <li><a href="{% url 'restaurants:favorites' %}">My favorites</a></li>
+        </ul>
+      </div>
+      <div class="col-6 col-lg-2">
+        <h6 class="mb-3">Account</h6>
+        <ul class="list-unstyled small d-grid gap-2">
+          <li><a href="{% url 'accounts:login' %}">Login</a></li>
+          <li><a href="{% url 'accounts:register_customer' %}">Create account</a></li>
+          <li><a href="{% url 'orders:list' %}">Track order</a></li>
+          <li><a href="{% url 'accounts:addresses' %}">Addresses</a></li>
+          <li><a href="{% url 'accounts:profile' %}">Profile</a></li>
+        </ul>
+      </div>
+      <div class="col-lg-4">
+        <h6 class="mb-3">Partner with FOODIES</h6>
+        <ul class="list-unstyled small d-grid gap-2">
+          <li><a href="{% url 'accounts:register_restaurant' %}"><i class="bi bi-shop me-2"></i>Register your restaurant</a></li>
+          <li><a href="{% url 'accounts:register_delivery' %}"><i class="bi bi-scooter me-2"></i>Become a delivery partner</a></li>
+          <li><a href="{% url 'core:contact' %}"><i class="bi bi-life-preserver me-2"></i>Help &amp; support</a></li>
+        </ul>
+        <div class="fd-card bg-transparent border-secondary-subtle mt-3 p-3">
+          <div class="small text-white-50">Order support</div>
+          <div class="fw-bold text-white">support@foodies.test</div>
+        </div>
+      </div>
+    </div>
+    <div class="fd-divider" style="background:rgba(255,255,255,.12)"></div>
+    <div class="d-flex flex-wrap justify-content-between gap-2 small">
+      <span>© {% now "Y" %} FOODIES. All rights reserved. Built with Django &amp; PostgreSQL.</span>
+      <span>Good Food. Great Mood.</span>
+    </div>
+  </div>
+</footer>

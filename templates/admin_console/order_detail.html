@@ -1,0 +1,173 @@
+{% extends "admin_console/base.html" %}
+{% load foodies_extras %}
+{% block title %}Order #{{ order.order_number }} — FOODIES Admin{% endblock %}
+{% block page_heading %}Order #{{ order.order_number }}{% endblock %}
+
+{% block content %}
+<div class="row g-3">
+  <div class="col-lg-8">
+    <div class="fd-card fd-card-body mb-3">
+      <div class="d-flex justify-content-between flex-wrap gap-2">
+        <div>
+          <h2 class="h5 fw-bold mb-1">{{ order.restaurant.name }}</h2>
+          <div class="small text-muted-2">Placed {{ order.created_at|date:"d M Y, h:i A" }} • Updated {{ order.updated_at|timesince }} ago</div>
+        </div>
+        <div class="text-end">
+          <span class="fd-badge {{ order.order_status|status_class }} fs-6">{{ order.status_label }}</span>
+          <div class="small text-muted-2 mt-1">Payment: {{ order.get_payment_status_display }}</div>
+        </div>
+      </div>
+      <div class="fd-divider"></div>
+      <div class="fd-table-scroll">
+        <table class="fd-table">
+          <thead><tr><th>Item</th><th>Qty</th><th>Unit</th><th class="text-end">Total</th></tr></thead>
+          <tbody>
+            {% for item in order.items.all %}
+              <tr>
+                <td>
+                  <span class="fd-veg-dot {% if not item.is_veg %}nonveg{% endif %}"></span>
+                  <span class="ms-2">{{ item.food_name }}</span>
+                  <div class="text-muted-2" style="font-size:.72rem">{{ item.category_name }}</div>
+                </td>
+                <td>{{ item.quantity }}</td>
+                <td>{{ item.price|inr }}</td>
+                <td class="text-end fw-semibold">{{ item.total|inr }}</td>
+              </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <div class="row g-3">
+      <div class="col-md-6">
+        <div class="fd-card fd-card-body h-100">
+          <h2 class="h6 fw-bold mb-2">Customer</h2>
+          <div class="fw-semibold">{{ order.customer.full_name }}</div>
+          <div class="small text-muted-2">{{ order.customer.email }}</div>
+          <div class="small text-muted-2">{{ order.customer_phone }}</div>
+          <div class="fd-divider"></div>
+          <div class="small-caps text-muted-2 mb-1">Delivery address</div>
+          <div class="small">{{ order.delivery_address_text }}</div>
+          {% if order.special_instructions %}
+            <div class="alert alert-light small mt-2 mb-0 rounded-3">{{ order.special_instructions }}</div>
+          {% endif %}
+        </div>
+      </div>
+      <div class="col-md-6">
+        <div class="fd-card fd-card-body h-100">
+          <h2 class="h6 fw-bold mb-2">Restaurant &amp; delivery</h2>
+          <div class="small fw-semibold">{{ order.restaurant.name }}</div>
+          <div class="small text-muted-2">{{ order.restaurant.address }}, {{ order.restaurant.city }}</div>
+          <div class="small text-muted-2">{{ order.restaurant.phone }}</div>
+          <div class="fd-divider"></div>
+          <div class="small-caps text-muted-2 mb-1">Delivery partner</div>
+          {% if order.delivery_boy %}
+            <div class="small fw-semibold">{{ order.delivery_boy.full_name }}</div>
+            <div class="small text-muted-2">{{ order.delivery_boy.phone }}</div>
+            {% if order.assignment %}
+              <div class="small text-muted-2">Status: {{ order.assignment.get_status_display }} • Earning {{ order.assignment.earning_amount|inr:0 }}</div>
+            {% endif %}
+          {% else %}
+            <p class="small text-muted-2 mb-0">Not assigned yet.</p>
+          {% endif %}
+        </div>
+      </div>
+    </div>
+
+    <div class="fd-card fd-card-body mt-3">
+      <h2 class="h6 fw-bold mb-3">Status timeline</h2>
+      <ul class="fd-tracker">
+        {% for entry in order.status_history.all %}
+          <li class="done">
+            <span class="fd-track-dot"><i class="bi bi-check-lg"></i></span>
+            <div>
+              <div class="fw-semibold small">{{ entry.get_status_display }}</div>
+              <div class="text-muted-2" style="font-size:.75rem">
+                {{ entry.created_at|date:"d M Y, h:i A" }}{% if entry.note %} • {{ entry.note }}{% endif %}
+                {% if entry.created_by %} • by {{ entry.created_by.full_name }}{% endif %}
+              </div>
+            </div>
+          </li>
+        {% empty %}
+          <li class="todo"><span class="fd-track-dot"><i class="bi bi-circle"></i></span><div class="small text-muted-2">No status history.</div></li>
+        {% endfor %}
+      </ul>
+    </div>
+  </div>
+
+  <div class="col-lg-4">
+    <div class="fd-card fd-card-body mb-3">
+      <h2 class="h6 fw-bold mb-3">Bill</h2>
+      <div class="fd-bill-row"><span>Subtotal</span><span>{{ order.subtotal|inr }}</span></div>
+      <div class="fd-bill-row discount"><span>Item discount</span><span>− {{ order.discount|inr }}</span></div>
+      {% if order.coupon_discount %}<div class="fd-bill-row discount"><span>Coupon {% if order.coupon %}({{ order.coupon.code }}){% endif %}</span><span>− {{ order.coupon_discount|inr }}</span></div>{% endif %}
+      <div class="fd-bill-row"><span>Delivery fee</span><span>{{ order.delivery_fee|inr }}</span></div>
+      <div class="fd-bill-row"><span>Taxes</span><span>{{ order.tax|inr }}</span></div>
+      <div class="fd-bill-row"><span>Platform fee</span><span>{{ order.platform_fee|inr }}</span></div>
+      <div class="fd-bill-row total"><span>Total</span><span>{{ order.total_amount|inr }}</span></div>
+      <div class="fd-divider"></div>
+      <div class="fd-bill-row"><span class="small text-muted-2">Restaurant payout (85%)</span><span class="small fw-semibold">{{ order.restaurant_earning|inr }}</span></div>
+    </div>
+
+    {% if order.is_active %}
+    <div class="fd-card fd-card-body mb-3">
+      <h2 class="h6 fw-bold mb-3">Update status</h2>
+      <form method="post" action="{% url 'dashboard:admin_order_status' order.order_number %}">
+        {% csrf_token %}
+        <select class="form-select mb-2" name="status">
+          <option value="">Choose new status…</option>
+          <option value="CONFIRMED">Restaurant Confirmed</option>
+          <option value="PREPARING">Food Preparing</option>
+          <option value="READY_FOR_PICKUP">Ready for Pickup</option>
+          <option value="ASSIGNED">Delivery Boy Assigned</option>
+          <option value="PICKED_UP">Picked Up</option>
+          <option value="OUT_FOR_DELIVERY">Out for Delivery</option>
+          <option value="DELIVERED">Delivered</option>
+          <option value="CANCELLED">Cancelled</option>
+        </select>
+        <input class="form-control mb-2" name="note" placeholder="Note (optional)">
+        <button class="btn btn-brand w-100" type="submit"><i class="bi bi-arrow-repeat me-1"></i>Update order</button>
+      </form>
+    </div>
+    {% endif %}
+
+    {% if not order.delivery_boy or order.order_status == 'READY_FOR_PICKUP' %}
+      {% if order.order_status != 'CANCELLED' and order.order_status != 'DELIVERED' %}
+      <div class="fd-card fd-card-body mb-3">
+        <h2 class="h6 fw-bold mb-3">Assign delivery partner</h2>
+        <form method="post" action="{% url 'dashboard:admin_assign_partner' order.order_number %}">
+          {% csrf_token %}
+          <input type="hidden" name="next" value="{% url 'dashboard:admin_order_detail' order.order_number %}">
+          <select class="form-select mb-2" name="delivery_boy" required>
+            <option value="">Select partner…</option>
+            {% for partner in partners %}
+              <option value="{{ partner.pk }}">{{ partner.full_name }} — {{ partner.phone }}</option>
+            {% endfor %}
+          </select>
+          <button class="btn btn-brand w-100" type="submit"><i class="bi bi-person-plus me-1"></i>Assign delivery</button>
+        </form>
+      </div>
+      {% endif %}
+    {% endif %}
+
+    <div class="fd-card fd-card-body">
+      <h2 class="h6 fw-bold mb-3">Payments</h2>
+      {% for payment in order.payments.all %}
+        <div class="fd-list-row">
+          <div class="flex-grow-1">
+            <div class="small fw-semibold">{{ payment.get_payment_method_display }}</div>
+            <div class="text-muted-2" style="font-size:.72rem">{{ payment.payment_id }}</div>
+          </div>
+          <div class="text-end">
+            <div class="fw-bold small">{{ payment.amount|inr }}</div>
+            <span class="fd-badge {{ payment.status|status_class }}">{{ payment.get_status_display }}</span>
+          </div>
+        </div>
+      {% empty %}
+        <p class="small text-muted-2 mb-0">No payment records.</p>
+      {% endfor %}
+    </div>
+  </div>
+</div>
+{% endblock %}

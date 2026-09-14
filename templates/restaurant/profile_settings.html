@@ -1,0 +1,57 @@
+{% extends "restaurant/base.html" %}
+{% load foodies_extras %}
+{% block title %}Profile settings — FOODIES{% endblock %}
+{% block page_heading %}Account &amp; profile{% endblock %}
+
+{% block content %}
+<div class="row g-3">
+  <div class="col-lg-6">
+    <div class="fd-card fd-card-body">
+      <h2 class="h6 fw-bold mb-3">Owner account</h2>
+      <form method="post" enctype="multipart/form-data">
+        {% csrf_token %}
+        <div class="row g-3">
+          <div class="col-md-6"><label class="form-label">First name</label>{{ form.first_name }}</div>
+          <div class="col-md-6"><label class="form-label">Last name</label>{{ form.last_name }}</div>
+          <div class="col-md-6"><label class="form-label">Email</label><input class="form-control" value="{{ user.email }}" disabled></div>
+          <div class="col-md-6"><label class="form-label">Phone</label>{{ form.phone }}</div>
+          <div class="col-12"><label class="form-label">Profile photo</label>{{ form.profile_image }}</div>
+        </div>
+        <button class="btn btn-brand mt-3" type="submit">Save changes</button>
+      </form>
+    </div>
+
+    <div class="fd-card fd-card-body mt-3">
+      <h2 class="h6 fw-bold mb-3">Change password</h2>
+      <a class="btn btn-soft" href="{% url 'accounts:profile' %}"><i class="bi bi-shield-lock me-1"></i>Open password settings</a>
+    </div>
+  </div>
+
+  <div class="col-lg-6">
+    <div class="fd-card fd-card-body mb-3">
+      <h2 class="h6 fw-bold mb-3">Restaurant</h2>
+      {% if restaurant %}
+        <div class="fd-list-row"><span class="text-muted-2 small">Name</span><span class="fw-semibold small">{{ restaurant.name }}</span></div>
+        <div class="fd-list-row"><span class="text-muted-2 small">Status</span>
+          {% if restaurant.is_approved %}<span class="fd-badge fd-badge-delivered">Approved</span>{% else %}<span class="fd-badge fd-badge-placed">Pending</span>{% endif %}
+        </div>
+        <div class="fd-list-row"><span class="text-muted-2 small">City</span><span class="small">{{ restaurant.city }}</span></div>
+        <div class="fd-list-row"><span class="text-muted-2 small">Rating</span><span class="small fw-semibold">{{ restaurant.rating|default:"—" }}</span></div>
+        <div class="fd-list-row"><span class="text-muted-2 small">Menu items</span><span class="small fw-semibold">{{ restaurant.food_items.count }}</span></div>
+        <a class="btn btn-soft mt-3" href="{% url 'dashboard:restaurant_profile' %}"><i class="bi bi-pencil me-1"></i>Edit restaurant profile</a>
+      {% else %}
+        {% include "partials/empty.html" with icon="🏪" title="No restaurant yet" message="Create your restaurant profile to start receiving orders." action_url="/restaurant-dashboard/restaurant/" action_label="Create restaurant" %}
+      {% endif %}
+    </div>
+
+    <div class="fd-card fd-card-body">
+      <h2 class="h6 fw-bold mb-3">Support</h2>
+      <p class="small text-muted-2">Need help with payouts, approvals or a customer issue? The FOODIES partner team replies within a few hours.</p>
+      <div class="d-grid gap-2">
+        <a class="btn btn-soft" href="{% url 'core:contact' %}"><i class="bi bi-headset me-1"></i>Contact support</a>
+        <a class="btn btn-soft" href="{% url 'accounts:notifications' %}"><i class="bi bi-bell me-1"></i>Notifications</a>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}

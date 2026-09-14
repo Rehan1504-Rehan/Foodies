@@ -1,0 +1,97 @@
+{% extends "partials/base.html" %}
+{% load static foodies_extras %}
+{% block title %}Offers &amp; coupon codes — FOODIES{% endblock %}
+
+{% block body %}
+{% include "partials/customer_nav.html" %}
+<main class="container py-4">
+  <div class="fd-hero mb-4" style="padding:2.5rem 2rem">
+    <div class="fd-hero-media" style="background-image:url('{% static 'images/hero-offers.jpg' %}')"></div>
+    <div class="fd-hero-content">
+      <span class="fd-pill mb-3"><i class="bi bi-ticket-perforated"></i> Savings unlocked</span>
+      <h1 class="h2 mb-2">Offers that make every meal better</h1>
+      <p class="text-white-50 mb-0">Copy a code, apply it in your cart — the discount is calculated on our servers at checkout.</p>
+    </div>
+  </div>
+
+  <section class="mb-5">
+    <h2 class="h5 mb-3">Live coupons ({{ coupons|length }})</h2>
+    <div class="row g-3">
+      {% for coupon in coupons %}
+        <div class="col-md-6 col-lg-4">
+          <div class="fd-offer-card {% cycle '' 'alt' 'alt2' %} h-100">
+            <div class="d-flex justify-content-between align-items-start mb-2">
+              <div>
+                <div class="small-caps text-white-50">{% if coupon.restaurant %}{{ coupon.restaurant.name }}{% else %}All restaurants{% endif %}</div>
+                <h3 class="h4 fw-bold mb-1">{{ coupon.display_value }}</h3>
+              </div>
+              <i class="bi bi-ticket-perforated fs-2 opacity-50"></i>
+            </div>
+            <p class="small text-white-50">{{ coupon.description|default:coupon.title|default:"Save on your FOODIES order." }}</p>
+            <ul class="list-unstyled small text-white-50 mb-3">
+              <li><i class="bi bi-dot"></i>Minimum order {{ coupon.minimum_order|inr:0 }}</li>
+              <li><i class="bi bi-dot"></i>Max discount {{ coupon.maximum_discount|inr:0 }}</li>
+              <li><i class="bi bi-dot"></i>Valid till {{ coupon.valid_until|date:"d M Y" }}</li>
+              {% if coupon.first_order_only %}<li><i class="bi bi-dot"></i>First order only</li>{% endif %}
+            </ul>
+            <div class="d-flex align-items-center justify-content-between gap-2">
+              <button class="fd-code-chip" data-copy="{{ coupon.code }}"><i class="bi bi-clipboard"></i>{{ coupon.code }}</button>
+              <a class="btn btn-sm btn-ghost" href="{% url 'restaurants:list' %}">Order now</a>
+            </div>
+          </div>
+        </div>
+      {% empty %}
+        <div class="col-12">{% include "partials/empty.html" with icon="🎟️" title="No live offers right now" message="New coupons drop every week — check back soon!" %}</div>
+      {% endfor %}
+    </div>
+  </section>
+
+  {% if discounted_food %}
+  <section class="mb-5">
+    <h2 class="h5 mb-3">Discounted dishes</h2>
+    <div class="fd-card fd-card-body">
+      {% for food in discounted_food %}
+        {% include "partials/food_row.html" with food=food show_restaurant=True %}
+      {% endfor %}
+    </div>
+  </section>
+  {% endif %}
+
+  {% if upcoming %}
+  <section class="mb-5">
+    <h2 class="h5 mb-3">Coming soon</h2>
+    <div class="row g-3">
+      {% for coupon in upcoming %}
+        <div class="col-md-6 col-lg-4">
+          <div class="fd-card fd-card-body h-100">
+            <div class="d-flex justify-content-between">
+              <span class="fw-bold">{{ coupon.display_value }}</span>
+              <span class="fd-badge fd-badge-soft">Starts {{ coupon.valid_from|date:"d M" }}</span>
+            </div>
+            <p class="small text-muted-2 mb-1 mt-2">{{ coupon.description }}</p>
+            <span class="fd-code-chip" style="background:var(--fd-bg);color:var(--fd-ink);border-color:var(--fd-line)">{{ coupon.code }}</span>
+          </div>
+        </div>
+      {% endfor %}
+    </div>
+  </section>
+  {% endif %}
+
+  {% if expired %}
+  <section>
+    <h2 class="h5 mb-3 text-muted-2">Recently expired</h2>
+    <div class="row g-3">
+      {% for coupon in expired %}
+        <div class="col-md-4">
+          <div class="fd-card fd-card-body opacity-75">
+            <span class="fw-bold">{{ coupon.code }}</span> — {{ coupon.display_value }}
+            <div class="small text-muted-2">Expired {{ coupon.valid_until|date:"d M Y" }}</div>
+          </div>
+        </div>
+      {% endfor %}
+    </div>
+  </section>
+  {% endif %}
+</main>
+{% include "partials/footer.html" %}
+{% endblock %}
