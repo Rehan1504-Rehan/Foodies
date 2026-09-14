@@ -160,10 +160,14 @@ class FullJourneyTests(TestCase):
         self.assertTrue(rider_client.login(username=self.rider.email, password=PASSWORD))
         self.assertIn(order.order_number, rider_client.get("/delivery/").content.decode())
         self.assertEqual(rider_client.get(f"/delivery/orders/{order.order_number}/").status_code, 200)
-        for step in ("PICKED_UP", "OUT_FOR_DELIVERY", "DELIVERED"):
+        # The partner accepts the job, then walks the delivery pipeline.
+        for step in ("ACCEPTED", "PICKED_UP", "OUT_FOR_DELIVERY", "DELIVERED"):
             rider_client.post(reverse("delivery:update_status", args=[order.order_number, step]))
             order.refresh_from_db()
-            self.assertEqual(order.order_status, step)
+            expected = "ASSIGNED" if step == "ACCEPTED" else step
+            self.assertEqual(order.order_status, expected, step)
+            order.assignment.refresh_from_db()
+            self.assertEqual(order.assignment.status, step, step)
 
         assignment = DeliveryAssignment.objects.get(order=order)
         self.assertEqual(assignment.status, DeliveryAssignment.Status.DELIVERED)
