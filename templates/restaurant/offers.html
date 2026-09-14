@@ -1,0 +1,62 @@
+{% extends "restaurant/base.html" %}
+{% load foodies_extras %}
+{% block title %}Offers — {{ restaurant.name }}{% endblock %}
+{% block page_heading %}Offers &amp; coupons{% endblock %}
+
+{% block content %}
+<div class="row g-3">
+  <div class="col-xl-7">
+    {% for coupon in coupons %}
+      <div class="fd-card fd-card-body mb-3">
+        <div class="d-flex justify-content-between flex-wrap gap-2">
+          <div>
+            <div class="d-flex align-items-center gap-2">
+              <span class="fd-code-chip" style="background:var(--fd-primary-soft);color:var(--fd-primary);border-color:var(--fd-primary)">{{ coupon.code }}</span>
+              <span class="fw-bold">{{ coupon.display_value }}</span>
+              {% if not coupon.is_active %}<span class="fd-badge fd-badge-soft">Paused</span>
+              {% elif coupon.is_expired %}<span class="fd-badge fd-badge-cancelled">Expired</span>
+              {% else %}<span class="fd-badge fd-badge-delivered">Live</span>{% endif %}
+            </div>
+            <div class="small text-muted-2 mt-2">{{ coupon.title|default:coupon.description|default:"Special offer for your customers" }}</div>
+            <div class="small text-muted-2">
+              Min order {{ coupon.minimum_order|inr:0 }} • Max discount {{ coupon.maximum_discount|inr:0 }} •
+              Valid {{ coupon.valid_from|date:"d M y" }} → {{ coupon.valid_until|date:"d M y" }}
+            </div>
+            <div class="small text-muted-2">Used {{ coupon.used_count }} / {{ coupon.usage_limit }} times • {{ coupon.per_user_limit }} per customer</div>
+          </div>
+          <form method="post" action="{% url 'dashboard:restaurant_toggle_coupon' coupon.pk %}">
+            {% csrf_token %}
+            <button class="btn btn-sm {% if coupon.is_active %}btn-outline-danger{% else %}btn-brand{% endif %}" type="submit">
+              {% if coupon.is_active %}Pause offer{% else %}Activate offer{% endif %}
+            </button>
+          </form>
+        </div>
+        <div class="fd-progress-thin mt-3"><span style="width:{{ coupon.used_count|percent_of:coupon.usage_limit }}%"></span></div>
+      </div>
+    {% empty %}
+      {% include "partials/empty.html" with icon="🎟️" title="No offers yet" message="Create a coupon to attract more orders to your kitchen." %}
+    {% endfor %}
+  </div>
+
+  <div class="col-xl-5">
+    <div class="fd-card fd-card-body">
+      <h2 class="h6 fw-bold mb-3">Create an offer</h2>
+      <form method="post">
+        {% csrf_token %}
+        {% for field in form %}
+          <div class="mb-3">
+            <label class="form-label" for="{{ field.id_for_label }}">{{ field.label }}</label>
+            {{ field }}
+            {% if field.help_text %}<div class="form-text">{{ field.help_text }}</div>{% endif %}
+            {% for error in field.errors %}<div class="text-danger small">{{ error }}</div>{% endfor %}
+          </div>
+        {% endfor %}
+        <button class="btn btn-brand w-100" type="submit"><i class="bi bi-plus-lg me-1"></i>Create offer</button>
+      </form>
+      <div class="alert alert-light small mt-3 mb-0 rounded-3">
+        Coupons you create apply only to <strong>{{ restaurant.name }}</strong> — FOODIES platform offers are managed by the admin team.
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}

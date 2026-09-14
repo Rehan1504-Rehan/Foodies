@@ -1,0 +1,112 @@
+{% load static %}
+<nav class="navbar navbar-expand-lg fd-navbar sticky-top py-2">
+  <div class="container">
+    <a class="fd-brand" href="{% url 'core:home' %}">
+      <span class="fd-brand-mark">🍔</span>
+      <span>{{ SITE_NAME }}<small>Good Food. Great Mood.</small></span>
+    </a>
+
+    <button class="navbar-toggler border-0 ms-auto me-2" type="button" data-bs-toggle="collapse" data-bs-target="#fdNavbar" aria-controls="fdNavbar" aria-expanded="false" aria-label="Toggle navigation">
+      <i class="bi bi-list fs-3"></i>
+    </button>
+
+    <div class="collapse navbar-collapse" id="fdNavbar">
+      <ul class="navbar-nav mx-lg-auto gap-lg-1 my-3 my-lg-0">
+        <li class="nav-item"><a class="nav-link fd-nav-link {% if request.resolver_match.url_name == 'home' %}active{% endif %}" href="{% url 'core:home' %}"><i class="bi bi-house-door me-1"></i>Home</a></li>
+        <li class="nav-item"><a class="nav-link fd-nav-link {% if 'restaurants' in request.path and 'favorites' not in request.path %}active{% endif %}" href="{% url 'restaurants:list' %}"><i class="bi bi-shop me-1"></i>Restaurants</a></li>
+        <li class="nav-item"><a class="nav-link fd-nav-link" href="{% url 'menu:list' %}"><i class="bi bi-grid me-1"></i>Categories</a></li>
+        <li class="nav-item"><a class="nav-link fd-nav-link {% if request.resolver_match.url_name == 'offers' %}active{% endif %}" href="{% url 'core:offers' %}"><i class="bi bi-ticket-perforated me-1"></i>Offers</a></li>
+        <li class="nav-item dropdown">
+          <a class="nav-link fd-nav-link dropdown-toggle" href="#" role="button" data-bs-toggle="dropdown"><i class="bi bi-person-circle me-1"></i>Menu</a>
+          <ul class="dropdown-menu border-0 shadow-card rounded-xl">
+            <li><a class="dropdown-item" href="{% url 'core:about' %}"><i class="bi bi-info-circle me-2"></i>About FOODIES</a></li>
+            <li><a class="dropdown-item" href="{% url 'core:contact' %}"><i class="bi bi-headset me-2"></i>Contact / Support</a></li>
+            <li><hr class="dropdown-divider"></li>
+            {% if user.is_authenticated %}
+              {% if user.is_customer %}
+                <li><a class="dropdown-item" href="{% url 'dashboard:customer_home' %}"><i class="bi bi-speedometer2 me-2"></i>My Dashboard</a></li>
+                <li><a class="dropdown-item" href="{% url 'orders:list' %}"><i class="bi bi-bag-check me-2"></i>My Orders</a></li>
+                <li><a class="dropdown-item" href="{% url 'restaurants:favorites' %}"><i class="bi bi-heart me-2"></i>My Favorites</a></li>
+                <li><a class="dropdown-item" href="{% url 'reviews:mine' %}"><i class="bi bi-star me-2"></i>My Reviews</a></li>
+                <li><a class="dropdown-item" href="{% url 'accounts:addresses' %}"><i class="bi bi-geo-alt me-2"></i>Addresses</a></li>
+                <li><a class="dropdown-item" href="{% url 'payments:history' %}"><i class="bi bi-credit-card me-2"></i>Payments</a></li>
+              {% elif user.is_restaurant_owner %}
+                <li><a class="dropdown-item" href="{% url 'dashboard:restaurant_home' %}"><i class="bi bi-shop-window me-2"></i>Restaurant Dashboard</a></li>
+              {% elif user.is_delivery_boy %}
+                <li><a class="dropdown-item" href="{% url 'delivery:dashboard' %}"><i class="bi bi-scooter me-2"></i>Delivery Dashboard</a></li>
+              {% endif %}
+              {% if user.is_admin_role or user.is_superuser %}
+                <li><a class="dropdown-item" href="{% url 'dashboard:admin_home' %}"><i class="bi bi-shield-lock me-2"></i>Admin Dashboard</a></li>
+              {% endif %}
+              <li><hr class="dropdown-divider"></li>
+              <li><a class="dropdown-item" href="{% url 'accounts:profile' %}"><i class="bi bi-person-gear me-2"></i>My Profile</a></li>
+              <li>
+                <form method="post" action="{% url 'accounts:logout' %}" class="px-0">
+                  {% csrf_token %}
+                  <button type="submit" class="dropdown-item text-danger"><i class="bi bi-box-arrow-right me-2"></i>Logout</button>
+                </form>
+              </li>
+            {% else %}
+              <li><a class="dropdown-item" href="{% url 'accounts:login' %}"><i class="bi bi-box-arrow-in-right me-2"></i>Login</a></li>
+              <li><a class="dropdown-item" href="{% url 'accounts:register_customer' %}"><i class="bi bi-person-plus me-2"></i>Create an account</a></li>
+              <li><a class="dropdown-item" href="{% url 'accounts:register_restaurant' %}"><i class="bi bi-shop me-2"></i>Partner your restaurant</a></li>
+              <li><a class="dropdown-item" href="{% url 'accounts:register_delivery' %}"><i class="bi bi-scooter me-2"></i>Ride with FOODIES</a></li>
+            {% endif %}
+          </ul>
+        </li>
+      </ul>
+
+      <div class="d-flex align-items-center gap-2">
+        <form class="fd-search d-none d-xl-flex" action="{% url 'core:search' %}" method="get" role="search">
+          <i class="bi bi-search text-muted-2"></i>
+          <input type="search" name="q" placeholder="Search food or restaurants" value="{{ request.GET.q|default:'' }}" aria-label="Search">
+        </form>
+
+        {% if user.is_authenticated %}
+          <a class="fd-icon-btn" href="{% url 'accounts:notifications' %}" title="Notifications">
+            <i class="bi bi-bell"></i>
+            {% if unread_notifications %}<span class="fd-cart-badge">{{ unread_notifications }}</span>{% endif %}
+          </a>
+        {% endif %}
+
+        <a class="fd-icon-btn" href="{% url 'cart:detail' %}" title="Cart">
+          <i class="bi bi-bag"></i>
+          <span class="fd-cart-badge {% if not cart_count %}d-none{% endif %}" data-cart-count>{{ cart_count }}</span>
+        </a>
+
+        {% if user.is_authenticated %}
+          <div class="dropdown">
+            <button class="btn btn-soft dropdown-toggle d-flex align-items-center gap-2" data-bs-toggle="dropdown">
+              {% if user.profile_image %}
+                <img src="{{ user.profile_image.url }}" class="fd-avatar" style="width:28px;height:28px" alt="{{ user.full_name }}">
+              {% else %}
+                <span class="fd-avatar" style="width:28px;height:28px;font-size:.75rem">{{ user.initials }}</span>
+              {% endif %}
+              <span class="d-none d-md-inline">{{ user.short_name }}</span>
+            </button>
+            <ul class="dropdown-menu dropdown-menu-end border-0 shadow-card rounded-xl">
+              <li class="px-3 py-2">
+                <div class="fw-bold">{{ user.full_name }}</div>
+                <div class="small text-muted-2">{{ user.get_role_display }}</div>
+              </li>
+              <li><hr class="dropdown-divider"></li>
+              <li><a class="dropdown-item" href="{% url 'accounts:profile' %}"><i class="bi bi-person me-2"></i>Profile</a></li>
+              {% if user.is_customer %}
+                <li><a class="dropdown-item" href="{% url 'orders:list' %}"><i class="bi bi-bag-check me-2"></i>My Orders</a></li>
+              {% endif %}
+              <li>
+                <form method="post" action="{% url 'accounts:logout' %}">
+                  {% csrf_token %}
+                  <button class="dropdown-item text-danger" type="submit"><i class="bi bi-box-arrow-right me-2"></i>Logout</button>
+                </form>
+              </li>
+            </ul>
+          </div>
+        {% else %}
+          <a class="btn btn-outline-brand d-none d-sm-inline-flex" href="{% url 'accounts:login' %}">Login</a>
+          <a class="btn btn-brand" href="{% url 'accounts:register_customer' %}">Sign up</a>
+        {% endif %}
+      </div>
+    </div>
+  </div>
+</nav>

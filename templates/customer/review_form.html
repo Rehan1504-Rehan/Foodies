@@ -1,0 +1,43 @@
+{% extends "partials/base.html" %}
+{% load static foodies_extras %}
+{% block title %}Review {{ restaurant.name }} — FOODIES{% endblock %}
+
+{% block body %}
+{% include "partials/customer_nav.html" %}
+<main class="container py-4">
+  <div class="row justify-content-center">
+    <div class="col-lg-6">
+      <div class="fd-card fd-card-body">
+        <h1 class="h4 mb-1">How was your food?</h1>
+        <p class="text-muted-2">Order #{{ order.order_number }} from {{ restaurant.name }} • delivered {{ order.delivered_at|date:"d M Y" }}</p>
+
+        <form method="post" class="mt-4">
+          {% csrf_token %}
+          <label class="form-label d-block">Your rating</label>
+          <div class="d-flex gap-2 mb-4 flex-wrap" role="radiogroup" aria-label="Rating">
+            {% for value in "12345"|make_list %}
+              <input type="radio" class="btn-check" name="rating" id="rating{{ value }}" value="{{ value }}" required>
+              <label class="btn btn-outline-brand btn-lg" for="rating{{ value }}">{{ value }} <i class="bi bi-star-fill"></i></label>
+            {% endfor %}
+          </div>
+
+          <div class="mb-3">
+            <label class="form-label" for="comment">Tell other foodies about it (optional)</label>
+            <textarea class="form-control" id="comment" name="comment" rows="4" maxlength="1000" placeholder="Was the food hot, fresh and on time?"></textarea>
+          </div>
+
+          <div class="d-flex gap-2">
+            <button class="btn btn-brand" type="submit"><i class="bi bi-send me-1"></i>Publish review</button>
+            <a class="btn btn-light" href="{% url 'orders:detail' order.order_number %}">Cancel</a>
+          </div>
+        </form>
+
+        <div class="alert alert-light small mt-4 mb-0 rounded-3">
+          <i class="bi bi-shield-check me-1"></i>Only customers with a delivered order can review — that is why your review carries real weight.
+        </div>
+      </div>
+    </div>
+  </div>
+</main>
+{% include "partials/footer.html" %}
+{% endblock %}

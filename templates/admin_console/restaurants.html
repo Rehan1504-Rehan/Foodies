@@ -1,0 +1,81 @@
+{% extends "admin_console/base.html" %}
+{% load foodies_extras %}
+{% block title %}Restaurants — FOODIES Admin{% endblock %}
+{% block page_heading %}Restaurant management{% endblock %}
+
+{% block content %}
+<div class="fd-card fd-card-body mb-3">
+  <form class="row g-2 align-items-end" method="get">
+    <div class="col-md-5">
+      <label class="form-label small" for="q">Search</label>
+      <input class="form-control" id="q" type="search" name="q" value="{{ q }}" placeholder="Restaurant, city or owner email">
+    </div>
+    <div class="col-md-3">
+      <label class="form-label small" for="approval">Approval</label>
+      <select class="form-select" id="approval" name="approval">
+        <option value="">All restaurants</option>
+        <option value="approved" {% if approval == 'approved' %}selected{% endif %}>Approved</option>
+        <option value="pending" {% if approval == 'pending' %}selected{% endif %}>Pending</option>
+      </select>
+    </div>
+    <div class="col-md-4 d-flex gap-2">
+      <button class="btn btn-brand flex-grow-1" type="submit">Filter</button>
+      <a class="btn btn-light" href="{% url 'dashboard:admin_restaurants' %}">Reset</a>
+    </div>
+  </form>
+</div>
+
+<div class="fd-table-wrap">
+  <div class="fd-table-scroll">
+    <table class="fd-table">
+      <thead><tr><th>Restaurant</th><th>Owner</th><th>City</th><th>Rating</th><th>Orders</th><th>Revenue</th><th>Status</th><th class="text-end">Actions</th></tr></thead>
+      <tbody>
+        {% for restaurant in restaurants %}
+          <tr>
+            <td>
+              <div class="d-flex align-items-center gap-2">
+                {% if restaurant.logo %}<img src="{{ restaurant.logo.url }}" class="fd-avatar" style="width:34px;height:34px" alt="">{% else %}<span class="fd-avatar" style="width:34px;height:34px;font-size:.8rem">{{ restaurant.name|slice:":1" }}</span>{% endif %}
+                <div>
+                  <a class="fw-semibold" href="{% url 'dashboard:admin_restaurant_detail' restaurant.pk %}">{{ restaurant.name|truncatechars:22 }}</a>
+                  <div class="text-muted-2" style="font-size:.72rem">{{ restaurant.cuisine_type|truncatechars:26 }}</div>
+                </div>
+              </div>
+            </td>
+            <td class="small text-muted-2">{{ restaurant.owner.full_name|truncatechars:16 }}</td>
+            <td class="small">{{ restaurant.city }}</td>
+            <td>{% if restaurant.rating_count %}<span class="fd-badge fd-badge-delivered">{{ restaurant.rating }}★</span>{% else %}<span class="text-muted-2 small">New</span>{% endif %}</td>
+            <td class="fw-semibold">{{ restaurant.order_count }}</td>
+            <td class="fw-semibold">{{ restaurant.revenue|default:0|inr:0 }}</td>
+            <td>
+              {% if not restaurant.is_approved %}<span class="fd-badge fd-badge-placed">Pending</span>
+              {% elif restaurant.is_open %}<span class="fd-badge fd-badge-open">Open</span>
+              {% else %}<span class="fd-badge fd-badge-closed">Closed</span>{% endif %}
+            </td>
+            <td class="text-end">
+              <div class="d-flex gap-1 justify-content-end flex-wrap">
+                {% if not restaurant.is_approved %}
+                  <form method="post" action="{% url 'dashboard:admin_approve_restaurant' restaurant.pk %}">
+                    {% csrf_token %}<button class="btn btn-sm btn-brand" type="submit">Approve</button>
+                  </form>
+                  <form method="post" action="{% url 'dashboard:admin_reject_restaurant' restaurant.pk %}" data-confirm="Reject {{ restaurant.name }}?" data-confirm-title="Reject restaurant">
+                    {% csrf_token %}<button class="btn btn-sm btn-outline-danger" type="submit">Reject</button>
+                  </form>
+                {% else %}
+                  <form method="post" action="{% url 'dashboard:admin_toggle_restaurant' restaurant.pk %}">
+                    {% csrf_token %}
+                    <input type="hidden" name="next" value="{% url 'dashboard:admin_restaurants' %}">
+                    <button class="btn btn-sm btn-soft" type="submit">{% if restaurant.is_open %}Close{% else %}Open{% endif %}</button>
+                  </form>
+                {% endif %}
+                <a class="btn btn-sm btn-light" href="{% url 'dashboard:admin_restaurant_detail' restaurant.pk %}">View</a>
+              </div>
+            </td>
+          </tr>
+        {% empty %}
+          <tr><td colspan="8" class="text-center text-muted-2 py-5">No restaurants found.</td></tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+{% endblock %}

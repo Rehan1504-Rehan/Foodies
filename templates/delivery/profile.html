@@ -1,0 +1,91 @@
+{% extends "delivery/base.html" %}
+{% load foodies_extras %}
+{% block title %}My profile — FOODIES Partner{% endblock %}
+{% block page_heading %}My profile{% endblock %}
+
+{% block content %}
+<div class="row g-3">
+  <div class="col-lg-4">
+    <div class="fd-card fd-card-body text-center">
+      {% if user.profile_image %}
+        <img src="{{ user.profile_image.url }}" class="fd-avatar fd-avatar-lg mx-auto mb-3" alt="">
+      {% else %}
+        <span class="fd-avatar fd-avatar-lg mx-auto mb-3">{{ user.initials }}</span>
+      {% endif %}
+      <h2 class="h5 mb-1">{{ user.full_name }}</h2>
+      <div class="small text-muted-2">{{ user.email }}</div>
+      <div class="small text-muted-2">{{ user.phone }}</div>
+      <div class="mt-2">
+        {% if profile.is_approved %}<span class="fd-badge fd-badge-delivered">Approved partner</span>{% else %}<span class="fd-badge fd-badge-placed">Pending approval</span>{% endif %}
+        {% if profile.is_online %}<span class="fd-badge fd-badge-open">Online</span>{% else %}<span class="fd-badge fd-badge-soft">Offline</span>{% endif %}
+      </div>
+      <div class="fd-divider"></div>
+      <div class="row text-center">
+        <div class="col-4 fd-mini-stat"><strong>{{ stats.completed }}</strong><span>Delivered</span></div>
+        <div class="col-4 fd-mini-stat"><strong>{{ stats.active }}</strong><span>Active</span></div>
+        <div class="col-4 fd-mini-stat"><strong>{{ stats.total_earnings|inr:0 }}</strong><span>Earned</span></div>
+      </div>
+      <form method="post" action="{% url 'delivery:toggle_availability' %}" class="mt-3">
+        {% csrf_token %}
+        <button class="btn {% if profile.is_online %}btn-outline-danger{% else %}btn-brand{% endif %} w-100" type="submit" {% if not profile.is_approved %}disabled{% endif %}>
+          {% if profile.is_online %}<i class="bi bi-toggle-on me-1"></i>Go offline{% else %}<i class="bi bi-toggle-off me-1"></i>Go online{% endif %}
+        </button>
+      </form>
+      {% if not profile.is_approved %}
+        <div class="alert alert-warning small mt-3 mb-0 rounded-3">Your account needs admin approval before you can go online.</div>
+      {% endif %}
+    </div>
+  </div>
+
+  <div class="col-lg-8">
+    <div class="fd-card fd-card-body mb-3">
+      <h2 class="h6 fw-bold mb-3">Personal details</h2>
+      <form method="post" enctype="multipart/form-data">
+        {% csrf_token %}
+        <div class="row g-3">
+          <div class="col-md-6"><label class="form-label">First name</label>{{ form.first_name }}</div>
+          <div class="col-md-6"><label class="form-label">Last name</label>{{ form.last_name }}</div>
+          <div class="col-md-6"><label class="form-label">Email</label><input class="form-control" value="{{ user.email }}" disabled></div>
+          <div class="col-md-6"><label class="form-label">Phone</label>{{ form.phone }}</div>
+          <div class="col-12"><label class="form-label">Profile picture</label>{{ form.profile_image }}</div>
+        </div>
+        <button class="btn btn-brand mt-3" type="submit" name="update_profile" value="1">Save changes</button>
+      </form>
+    </div>
+
+    <div class="fd-card fd-card-body">
+      <h2 class="h6 fw-bold mb-3">Vehicle &amp; availability</h2>
+      <form method="post">
+        {% csrf_token %}
+        <div class="row g-3">
+          <div class="col-md-4">
+            <label class="form-label" for="vehicle_type">Vehicle type</label>
+            <select class="form-select" id="vehicle_type" name="vehicle_type">
+              {% for value, label in profile.VehicleType.choices %}
+                <option value="{{ value }}" {% if profile.vehicle_type == value %}selected{% endif %}>{{ label }}</option>
+              {% endfor %}
+            </select>
+          </div>
+          <div class="col-md-4"><label class="form-label" for="vehicle_number">Vehicle number</label>
+            <input class="form-control" id="vehicle_number" name="vehicle_number" value="{{ profile.vehicle_number }}" placeholder="GJ01AB1234"></div>
+          <div class="col-md-4"><label class="form-label" for="license_number">Driving licence</label>
+            <input class="form-control" id="license_number" name="license_number" value="{{ profile.license_number }}" placeholder="DL-1234567890"></div>
+          <div class="col-md-6"><label class="form-label" for="current_area">Working area</label>
+            <input class="form-control" id="current_area" name="current_area" value="{{ profile.current_area }}" placeholder="Satellite, Ahmedabad"></div>
+          <div class="col-md-6">
+            <label class="form-label" for="availability_status">Availability</label>
+            <select class="form-select" id="availability_status" name="availability_status">
+              <option value="ONLINE" {% if profile.is_online %}selected{% endif %}>Online — accept deliveries</option>
+              <option value="OFFLINE" {% if not profile.is_online %}selected{% endif %}>Offline — pause deliveries</option>
+            </select>
+          </div>
+        </div>
+        <button class="btn btn-brand mt-3" type="submit" name="update_vehicle" value="1">Save vehicle details</button>
+      </form>
+      <div class="alert alert-light small mt-3 mb-0 rounded-3">
+        <i class="bi bi-info-circle me-1"></i>Deliveries can only be accepted while your status is <strong>Online</strong> and your account is approved.
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}

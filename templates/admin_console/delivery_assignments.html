@@ -1,0 +1,151 @@
+{% extends "admin_console/base.html" %}
+{% load foodies_extras %}
+{% block title %}Delivery management — FOODIES Admin{% endblock %}
+{% block page_heading %}Delivery assignment &amp; tracking{% endblock %}
+
+{% block content %}
+<div class="row g-3 mb-4">
+  <div class="col-md-4">
+    <div class="fd-stat-card amber">
+      <div class="fd-stat-icon"><i class="bi bi-box-seam"></i></div>
+      <div class="fd-stat-value">{{ ready_orders|length }}</div>
+      <div class="fd-stat-label">Ready for pickup — unassigned</div>
+    </div>
+  </div>
+  <div class="col-md-4">
+    <div class="fd-stat-card blue">
+      <div class="fd-stat-icon"><i class="bi bi-truck"></i></div>
+      <div class="fd-stat-value">{{ active_orders|length }}</div>
+      <div class="fd-stat-label">Live deliveries</div>
+    </div>
+  </div>
+  <div class="col-md-4">
+    <div class="fd-stat-card green">
+      <div class="fd-stat-icon"><i class="bi bi-scooter"></i></div>
+      <div class="fd-stat-value">{{ partners|length }}</div>
+      <div class="fd-stat-label">Approved partners</div>
+    </div>
+  </div>
+</div>
+
+<div class="row g-3">
+  <div class="col-xl-6">
+    <div class="fd-card fd-card-body h-100">
+      <h2 class="h6 fw-bold mb-3">Orders waiting for a delivery partner</h2>
+      {% for order in ready_orders %}
+        <div class="border rounded-3 p-3 mb-3">
+          <div class="d-flex justify-content-between align-items-start gap-2">
+            <div>
+              <div class="fw-bold">Order #{{ order.order_number }}</div>
+              <div class="small text-muted-2">{{ order.restaurant.name }} → {{ order.customer_name }}</div>
+              <div class="small text-muted-2">{{ order.delivery_address_text|truncatechars:80 }}</div>
+              <div class="small text-muted-2">Ready since {{ order.updated_at|timesince }} ago • {{ order.items_total_quantity }} items</div>
+            </div>
+            <span class="fw-bold">{{ order.total_amount|inr }}</span>
+          </div>
+          <form method="post" action="{% url 'dashboard:admin_assign_partner' order.order_number %}" class="d-flex gap-2 mt-3">
+            {% csrf_token %}
+            <input type="hidden" name="next" value="{% url 'dashboard:admin_delivery_assignments' %}">
+            <select class="form-select form-select-sm" name="delivery_boy" required>
+              <option value="">Select a delivery partner…</option>
+              {% for partner in partners %}
+                <option value="{{ partner.pk }}">
+                  {{ partner.full_name }} — {{ partner.delivery_profile.get_vehicle_type_display }} • {{ partner.active_count }} active
+                  {% if partner.delivery_profile.is_online %}• ONLINE{% else %}• offline{% endif %}
+                </option>
+              {% endfor %}
+            </select>
+            <button class="btn btn-brand btn-sm text-nowrap" type="submit"><i class="bi bi-person-plus me-1"></i>Assign</button>
+          </form>
+        </div>
+      {% empty %}
+        {% include "partials/empty.html" with icon="📦" title="Nothing is waiting" message="Orders appear here the moment a restaurant marks them ready for pickup." %}
+      {% endfor %}
+    </div>
+  </div>
+
+  <div class="col-xl-6">
+    <div class="fd-card fd-card-body h-100">
+      <h2 class="h6 fw-bold mb-3">Live deliveries</h2>
+      <div class="fd-table-scroll">
+        <table class="fd-table">
+          <thead><tr><th>Order</th><th>Partner</th><th>Status</th><th></th></tr></thead>
+          <tbody>
+            {% for order in active_orders %}
+              <tr>
+                <td>
+                  <a href="{% url 'dashboard:admin_order_detail' order.order_number %}" class="fw-semibold">#{{ order.order_number }}</a>
+                  <div class="text-muted-2" style="font-size:.72rem">{{ order.restaurant.name|truncatechars:18 }}</div>
+                </td>
+                <td class="small">{{ order.delivery_boy.full_name|default:"—" }}</td>
+                <td><span class="fd-badge {{ order.order_status|status_class }}">{{ order.status_label }}</span></td>
+                <td class="text-end">
+                  <form method="post" action="{% url 'dashboard:admin_assign_partner' order.order_number %}" class="d-flex gap-1">
+                    {% csrf_token %}
+                    <input type="hidden" name="next" value="{% url 'dashboard:admin_delivery_assignments' %}">
+                    <select class="form-select form-select-sm" name="delivery_boy" style="max-width:150px">
+                      <option value="">Reassign…</option>
+                      {% for partner in partners %}<option value="{{ partner.pk }}">{{ partner.full_name }}</option>{% endfor %}
+                    </select>
+                    <button class="btn btn-sm btn-soft" type="submit">Set</button>
+                  </form>
+                </td>
+              </tr>
+            {% empty %}
+              <tr><td colspan="4" class="text-center text-muted-2 py-4">No live deliveries right now.</td></tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+
+  <div class="col-xl-7">
+    <div class="fd-card fd-card-body">
+      <h2 class="h6 fw-bold mb-3">Assignment history</h2>
+      <div class="fd-table-scroll">
+        <table class="fd-table">
+          <thead><tr><th>Order</th><th>Partner</th><th>Status</th><th>Distance</th><th>Earning</th><th>Assigned</th></tr></thead>
+          <tbody>
+            {% for assignment in history %}
+              <tr>
+                <td class="fw-semibold">#{{ assignment.order.order_number }}</td>
+                <td class="small">{{ assignment.delivery_boy.full_name }}</td>
+                <td><span class="fd-badge {{ assignment.status|status_class }}">{{ assignment.get_status_display }}</span></td>
+                <td class="small">{{ assignment.distance_km }} km</td>
+                <td class="small fw-semibold">{{ assignment.earning_amount|inr:0 }}</td>
+                <td class="small text-muted-2">{{ assignment.assigned_at|date:"d M, h:i A" }}</td>
+              </tr>
+            {% empty %}
+              <tr><td colspan="6" class="text-center text-muted-2 py-4">No assignments yet.</td></tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+
+  <div class="col-xl-5">
+    <div class="fd-card fd-card-body h-100">
+      <h2 class="h6 fw-bold mb-3">Recent delivery earnings</h2>
+      {% for earning in earnings %}
+        <div class="fd-list-row">
+          <span class="fd-avatar">💰</span>
+          <div class="flex-grow-1">
+            <div class="fw-semibold small">{{ earning.delivery_boy.full_name }}</div>
+            <div class="text-muted-2" style="font-size:.72rem">
+              {% if earning.order %}Order #{{ earning.order.order_number }}{% else %}Adjustment{% endif %} • {{ earning.created_at|date:"d M Y" }}
+            </div>
+          </div>
+          <div class="text-end">
+            <div class="fw-bold small">{{ earning.amount|inr }}</div>
+            <span class="fd-badge {{ earning.status|status_class }}">{{ earning.get_status_display }}</span>
+          </div>
+        </div>
+      {% empty %}
+        <p class="small text-muted-2 mb-0">No earnings recorded yet.</p>
+      {% endfor %}
+    </div>
+  </div>
+</div>
+{% endblock %}

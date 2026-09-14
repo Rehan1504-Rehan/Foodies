@@ -1,0 +1,59 @@
+{% extends "admin_console/base.html" %}
+{% load foodies_extras %}
+{% block title %}Payments — FOODIES Admin{% endblock %}
+{% block page_heading %}Payment management{% endblock %}
+
+{% block content %}
+<div class="row g-3 mb-3">
+  <div class="col-6 col-lg-3"><div class="fd-stat-card green"><div class="fd-stat-icon"><i class="bi bi-check2-circle"></i></div><div class="fd-stat-value">{{ totals.collected|inr:0 }}</div><div class="fd-stat-label">Collected successfully</div></div></div>
+  <div class="col-6 col-lg-3"><div class="fd-stat-card amber"><div class="fd-stat-icon"><i class="bi bi-hourglass"></i></div><div class="fd-stat-value">{{ totals.pending|inr:0 }}</div><div class="fd-stat-label">Pending</div></div></div>
+  <div class="col-6 col-lg-3"><div class="fd-stat-card"><div class="fd-stat-icon"><i class="bi bi-x-octagon"></i></div><div class="fd-stat-value">{{ totals.failed|inr:0 }}</div><div class="fd-stat-label">Failed</div></div></div>
+  <div class="col-6 col-lg-3"><div class="fd-stat-card blue"><div class="fd-stat-icon"><i class="bi bi-cash-coin"></i></div><div class="fd-stat-value">{{ totals.cod|inr:0 }}</div><div class="fd-stat-label">Cash on delivery volume</div></div></div>
+</div>
+
+<div class="fd-card fd-card-body mb-3">
+  <form class="row g-2 align-items-end" method="get">
+    <div class="col-md-4">
+      <label class="form-label small" for="status">Payment status</label>
+      <select class="form-select" id="status" name="status">
+        <option value="">All statuses</option>
+        {% for value, label in statuses %}<option value="{{ value }}" {% if status == value %}selected{% endif %}>{{ label }}</option>{% endfor %}
+      </select>
+    </div>
+    <div class="col-md-4">
+      <label class="form-label small" for="method">Method</label>
+      <select class="form-select" id="method" name="method">
+        <option value="">All methods</option>
+        {% for value, label in methods %}<option value="{{ value }}" {% if method == value %}selected{% endif %}>{{ label }}</option>{% endfor %}
+      </select>
+    </div>
+    <div class="col-md-4 d-flex gap-2">
+      <button class="btn btn-brand flex-grow-1" type="submit">Filter</button>
+      <a class="btn btn-light" href="{% url 'dashboard:admin_payments' %}">Reset</a>
+    </div>
+  </form>
+</div>
+
+<div class="fd-table-wrap">
+  <div class="fd-table-scroll">
+    <table class="fd-table">
+      <thead><tr><th>Payment ID</th><th>Order</th><th>Customer</th><th>Method</th><th>Amount</th><th>Status</th><th>Created</th></tr></thead>
+      <tbody>
+        {% for payment in payments %}
+          <tr>
+            <td class="small text-muted-2">{{ payment.payment_id|truncatechars:30 }}</td>
+            <td><a href="{% url 'dashboard:admin_order_detail' payment.order.order_number %}" class="fw-semibold">#{{ payment.order.order_number }}</a></td>
+            <td class="small">{{ payment.order.customer.full_name|truncatechars:16 }}</td>
+            <td><span class="fd-badge fd-badge-soft">{{ payment.get_payment_method_display }}</span></td>
+            <td class="fw-bold">{{ payment.amount|inr }}</td>
+            <td><span class="fd-badge {{ payment.status|status_class }}">{{ payment.get_status_display }}</span></td>
+            <td class="small text-muted-2">{{ payment.created_at|date:"d M Y, h:i A" }}</td>
+          </tr>
+        {% empty %}
+          <tr><td colspan="7" class="text-center text-muted-2 py-5">No payments found.</td></tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+{% endblock %}

@@ -1,0 +1,44 @@
+{% extends "partials/base.html" %}
+{% load static foodies_extras %}
+{% block title %}Notifications — FOODIES{% endblock %}
+
+{% block body %}
+{% include "partials/customer_nav.html" %}
+<main class="container py-4">
+  <div class="d-flex flex-wrap justify-content-between align-items-center gap-2 mb-4">
+    <div>
+      <h1 class="h3 mb-1">Notifications</h1>
+      <p class="text-muted-2 mb-0">{{ unread_count }} unread update{{ unread_count|pluralize }} from FOODIES.</p>
+    </div>
+    <div class="d-flex gap-2">
+      <a class="btn btn-sm {% if not unread_only %}btn-brand{% else %}btn-light{% endif %}" href="{% url 'accounts:notifications' %}">All</a>
+      <a class="btn btn-sm {% if unread_only %}btn-brand{% else %}btn-light{% endif %}" href="?filter=unread">Unread</a>
+      {% if unread_count %}<a class="btn btn-sm btn-soft" href="?mark_read=1"><i class="bi bi-check2-all me-1"></i>Mark all read</a>{% endif %}
+    </div>
+  </div>
+
+  <div class="fd-card fd-card-body">
+    {% for note in notifications %}
+      <div class="fd-list-row {% if not note.is_read %}bg-soft rounded-3 px-3{% endif %}">
+        <span class="fd-avatar">
+          {% if note.kind == 'DELIVERY' %}🛵{% elif note.kind == 'PAYMENT' %}💳{% elif note.kind == 'RESTAURANT' %}🏪{% elif note.kind == 'ACCOUNT' %}🔐{% else %}🔔{% endif %}
+        </span>
+        <div class="flex-grow-1">
+          <div class="fw-semibold">{{ note.title }} {% if not note.is_read %}<span class="fd-badge fd-badge-placed">New</span>{% endif %}</div>
+          <div class="small text-muted-2">{{ note.message }}</div>
+          <div class="text-muted-2" style="font-size:.72rem">{{ note.created_at|date:"d M Y, h:i A" }} • {{ note.created_at|timesince }} ago</div>
+        </div>
+        {% if note.url %}
+          <form method="post" action="{% url 'accounts:notification_read' note.pk %}">
+            {% csrf_token %}
+            <button class="btn btn-sm btn-soft" type="submit">Open</button>
+          </form>
+        {% endif %}
+      </div>
+    {% empty %}
+      {% include "partials/empty.html" with icon="🔔" title="No notifications" message="Order updates and offers will show up here." %}
+    {% endfor %}
+  </div>
+</main>
+{% include "partials/footer.html" %}
+{% endblock %}

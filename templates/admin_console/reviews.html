@@ -1,0 +1,78 @@
+{% extends "admin_console/base.html" %}
+{% load foodies_extras %}
+{% block title %}Reviews — FOODIES Admin{% endblock %}
+{% block page_heading %}Review moderation{% endblock %}
+
+{% block content %}
+<div class="row g-3 mb-3">
+  <div class="col-lg-4">
+    <div class="fd-stat-card">
+      <div class="fd-stat-icon"><i class="bi bi-star"></i></div>
+      <div class="fd-stat-value">{{ avg|floatformat:2 }}</div>
+      <div class="fd-stat-label">Average rating across {{ count }} reviews</div>
+    </div>
+  </div>
+  <div class="col-lg-8">
+    <div class="fd-card fd-card-body h-100">
+      <h2 class="h6 fw-bold mb-3">Rating distribution</h2>
+      {% for row in distribution %}
+        <div class="d-flex align-items-center gap-2 mb-2">
+          <span class="small text-muted-2" style="width:30px">{{ row.star }}★</span>
+          <div class="fd-progress-thin flex-grow-1"><span style="width:{{ row.count|percent_of:count }}%"></span></div>
+          <span class="small fw-semibold" style="width:36px;text-align:right">{{ row.count }}</span>
+        </div>
+      {% endfor %}
+    </div>
+  </div>
+</div>
+
+<div class="fd-card fd-card-body mb-3">
+  <form class="row g-2 align-items-end" method="get">
+    <div class="col-md-4">
+      <label class="form-label small" for="rating">Filter by rating</label>
+      <select class="form-select" id="rating" name="rating">
+        <option value="">All ratings</option>
+        {% for star in "54321"|make_list %}<option value="{{ star }}" {% if rating|stringformat:"s" == star %}selected{% endif %}>{{ star }} star{{ star|add:"" }}</option>{% endfor %}
+      </select>
+    </div>
+    <div class="col-md-4 d-flex gap-2">
+      <button class="btn btn-brand" type="submit">Filter</button>
+      <a class="btn btn-light" href="{% url 'dashboard:admin_reviews' %}">Reset</a>
+    </div>
+  </form>
+</div>
+
+<div class="fd-table-wrap">
+  <div class="fd-table-scroll">
+    <table class="fd-table">
+      <thead><tr><th>Restaurant</th><th>Customer</th><th>Rating</th><th>Review</th><th>Date</th><th>Visibility</th><th class="text-end">Actions</th></tr></thead>
+      <tbody>
+        {% for review in reviews %}
+          <tr>
+            <td class="small fw-semibold">{{ review.restaurant.name|truncatechars:20 }}</td>
+            <td class="small">{{ review.customer.full_name|truncatechars:16 }}<div class="text-muted-2" style="font-size:.72rem">#{{ review.order.order_number }}</div></td>
+            <td><span class="fd-stars">{{ review.rating|star_rating }}</span></td>
+            <td class="small" style="max-width:320px">{{ review.comment|default:"—"|truncatechars:120 }}</td>
+            <td class="small text-muted-2">{{ review.created_at|date:"d M Y" }}</td>
+            <td>{% if review.is_hidden %}<span class="fd-badge fd-badge-cancelled">Hidden</span>{% else %}<span class="fd-badge fd-badge-delivered">Visible</span>{% endif %}</td>
+            <td class="text-end">
+              <div class="d-flex gap-1 justify-content-end">
+                <form method="post" action="{% url 'dashboard:admin_toggle_review' review.pk %}">
+                  {% csrf_token %}
+                  <button class="btn btn-sm btn-soft" type="submit">{% if review.is_hidden %}Restore{% else %}Hide{% endif %}</button>
+                </form>
+                <form method="post" action="{% url 'dashboard:admin_delete_review' review.pk %}" data-confirm="Delete this review permanently?" data-confirm-title="Delete review">
+                  {% csrf_token %}
+                  <button class="btn btn-sm btn-outline-danger" type="submit"><i class="bi bi-trash3"></i></button>
+                </form>
+              </div>
+            </td>
+          </tr>
+        {% empty %}
+          <tr><td colspan="7" class="text-center text-muted-2 py-5">No reviews yet.</td></tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+{% endblock %}

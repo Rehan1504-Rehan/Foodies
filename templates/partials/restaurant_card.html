@@ -1,0 +1,45 @@
+{% load static humanize foodies_extras %}
+<article class="fd-card fd-card-hover fd-restaurant-card position-relative">
+  <div class="fd-restaurant-media">
+    <a href="{% url 'restaurants:detail' restaurant.slug %}">
+      {% if restaurant.cover_image %}
+        <img src="{{ restaurant.cover_image.url }}" alt="{{ restaurant.name }}" loading="lazy">
+      {% else %}
+        <img src="{% static 'images/placeholder-restaurant.jpg' %}" alt="{{ restaurant.name }}" loading="lazy">
+      {% endif %}
+    </a>
+    <span class="fd-rating-chip"><i class="bi bi-star-fill"></i> {% if restaurant.rating_count %}{{ restaurant.rating }}{% else %}New{% endif %}</span>
+    {% if user.is_authenticated and user.is_customer %}
+      <button class="fd-fav-btn {% if restaurant.pk in favorite_ids %}active{% endif %}"
+              data-favorite-url="{% url 'restaurants:toggle_favorite' restaurant.slug %}"
+              title="Save to favourites" aria-label="Save {{ restaurant.name }} to favourites">
+        <i class="bi {% if restaurant.pk in favorite_ids %}bi-heart-fill{% else %}bi-heart{% endif %}"></i>
+      </button>
+    {% endif %}
+    {% if restaurant.coupons.exists %}
+      {% with offer=restaurant.coupons.first %}
+        <div class="fd-offer-ribbon"><i class="bi bi-ticket-perforated me-1"></i>{{ offer.display_value }} • Use {{ offer.code }}</div>
+      {% endwith %}
+    {% elif not restaurant.is_open %}
+      <div class="fd-offer-ribbon" style="background:rgba(217,45,32,.9)">Currently closed</div>
+    {% endif %}
+  </div>
+  <div class="fd-card-body">
+    <div class="d-flex justify-content-between align-items-start gap-2">
+      <h5 class="mb-1 h6 fw-bold">
+        <a href="{% url 'restaurants:detail' restaurant.slug %}" class="stretched-link-none">{{ restaurant.name }}</a>
+      </h5>
+      {% if restaurant.is_open %}<span class="fd-badge fd-badge-open">Open</span>{% else %}<span class="fd-badge fd-badge-closed">Closed</span>{% endif %}
+    </div>
+    <p class="small text-muted-2 mb-2 text-truncate-2">{{ restaurant.cuisine_type }}</p>
+    <div class="d-flex flex-wrap align-items-center gap-3 small text-muted-2">
+      <span><i class="bi bi-clock me-1"></i>{{ restaurant.delivery_time }} min</span>
+      <span><i class="bi bi-scooter me-1"></i>{% if restaurant.delivery_fee %}₹{{ restaurant.delivery_fee|floatformat:0 }} fee{% else %}Free delivery{% endif %}</span>
+      <span><i class="bi bi-geo-alt me-1"></i>{{ restaurant.area|default:restaurant.city }}</span>
+    </div>
+    <div class="d-flex align-items-center justify-content-between mt-3 pt-3 border-top">
+      <span class="small text-muted-2"><i class="bi bi-shop me-1"></i>{{ restaurant.item_count|default:restaurant.food_items.count }} dishes • Min ₹{{ restaurant.minimum_order|floatformat:0 }}</span>
+      <a class="btn btn-sm btn-soft" href="{% url 'restaurants:detail' restaurant.slug %}">Order now <i class="bi bi-arrow-right ms-1"></i></a>
+    </div>
+  </div>
+</article>

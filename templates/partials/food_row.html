@@ -1,0 +1,57 @@
+{% load static foodies_extras %}
+{% with qty=food_quantities|get_item:food.pk|default_if_none:0 %}
+<div class="fd-food-card" data-food-card="{{ food.pk }}" id="item-{{ food.pk }}">
+  <div class="fd-food-body">
+    <div class="d-flex align-items-center gap-2 mb-1 flex-wrap">
+      <span class="fd-veg-dot {% if not food.is_veg %}nonveg{% endif %}" title="{{ food.food_type }}"></span>
+      {% if food.is_recommended %}<span class="fd-badge fd-badge-soft"><i class="bi bi-award"></i> Bestseller</span>{% endif %}
+      <span class="small text-muted-2"><i class="bi bi-clock me-1"></i>{{ food.preparation_time }} min</span>
+      {% if food.order_count %}<span class="small text-muted-2"><i class="bi bi-fire me-1"></i>{{ food.order_count }} ordered</span>{% endif %}
+    </div>
+    <h6 class="fw-bold mb-1">{{ food.name }}</h6>
+    <p class="small text-muted-2 mb-2 text-truncate-2">{{ food.description|default:"Freshly prepared in our kitchen." }}</p>
+    <div class="d-flex align-items-center gap-2 flex-wrap">
+      <span class="fd-price">{{ food.final_price|inr }}</span>
+      {% if food.has_discount %}
+        <span class="fd-price-del">{{ food.price|inr }}</span>
+        <span class="fd-badge fd-badge-delivered">{{ food.discount_percent }}% OFF</span>
+      {% endif %}
+    </div>
+    {% if show_restaurant %}
+      <div class="small mt-1">
+        <a href="{% url 'restaurants:detail' food.restaurant.slug %}" class="text-muted-2"><i class="bi bi-shop me-1"></i>{{ food.restaurant.name }}</a>
+      </div>
+    {% endif %}
+  </div>
+
+  <div class="text-center d-flex flex-column align-items-center gap-2">
+    {% if food.image %}
+      <img src="{{ food.image.url }}" class="fd-food-thumb" alt="{{ food.name }}" loading="lazy">
+    {% else %}
+      <img src="{% static 'images/placeholder-food.jpg' %}" class="fd-food-thumb" alt="{{ food.name }}" loading="lazy">
+    {% endif %}
+
+    {% if food.is_available %}
+      <div data-qty-wrap="{{ food.pk }}" class="fd-qty {% if not qty %}d-none{% endif %}">
+        <button type="button" data-cart-qty="decrease" data-food-id="{{ food.pk }}" aria-label="Decrease quantity">−</button>
+        <span data-qty-value="{{ food.pk }}">{{ qty }}</span>
+        <button type="button" data-cart-qty="increase" data-food-id="{{ food.pk }}" aria-label="Increase quantity">+</button>
+      </div>
+
+      <button class="fd-add-btn {% if qty %}d-none{% endif %}"
+              data-add-to-cart="{% url 'cart:add' food.pk %}"
+              data-food-id="{{ food.pk }}"
+              data-requires-auth="{% if user.is_authenticated %}0{% else %}1{% endif %}">ADD</button>
+    {% else %}
+      <span class="fd-badge fd-badge-cancelled">Sold out</span>
+    {% endif %}
+
+    {% if user.is_authenticated and user.is_customer %}
+      <button class="btn btn-link btn-sm p-0 {% if food.pk in favorite_food_ids %}text-primary-brand{% else %}text-muted-2{% endif %}"
+              data-favorite-url="{% url 'menu:toggle_favorite_food' food.pk %}" title="Favourite this dish" aria-label="Favourite {{ food.name }}">
+        <i class="bi {% if food.pk in favorite_food_ids %}bi-heart-fill{% else %}bi-heart{% endif %}"></i>
+      </button>
+    {% endif %}
+  </div>
+</div>
+{% endwith %}

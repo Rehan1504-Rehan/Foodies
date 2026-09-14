@@ -1,0 +1,156 @@
+{% extends "restaurant/base.html" %}
+{% load static foodies_extras %}
+{% block title %}{{ restaurant.name }} — Restaurant dashboard{% endblock %}
+{% block page_heading %}Dashboard{% endblock %}
+
+{% block content %}
+{% if not restaurant.is_approved %}
+  <div class="alert alert-warning rounded-3 d-flex gap-3 align-items-start">
+    <i class="bi bi-hourglass-split fs-4"></i>
+    <div>
+      <div class="fw-bold">Your restaurant is waiting for FOODIES approval</div>
+      <div class="small">You can set up your menu and profile now. Customers will see your kitchen the moment an admin approves it.</div>
+    </div>
+  </div>
+{% endif %}
+
+<div class="row g-3 mb-4">
+  <div class="col-6 col-xl-3"><div class="fd-stat-card"><div class="fd-stat-icon"><i class="bi bi-receipt"></i></div><div class="fd-stat-value">{{ stats.todays_orders }}</div><div class="fd-stat-label">Today's orders</div></div></div>
+  <div class="col-6 col-xl-3"><div class="fd-stat-card amber"><div class="fd-stat-icon"><i class="bi bi-hourglass"></i></div><div class="fd-stat-value">{{ stats.pending_orders }}</div><div class="fd-stat-label">Pending orders</div></div></div>
+  <div class="col-6 col-xl-3"><div class="fd-stat-card green"><div class="fd-stat-icon"><i class="bi bi-currency-rupee"></i></div><div class="fd-stat-value">{{ stats.todays_revenue|inr:0 }}</div><div class="fd-stat-label">Today's revenue</div></div></div>
+  <div class="col-6 col-xl-3"><div class="fd-stat-card violet"><div class="fd-stat-icon"><i class="bi bi-graph-up-arrow"></i></div><div class="fd-stat-value">{{ stats.total_revenue|inr:0 }}</div><div class="fd-stat-label">Total revenue</div></div></div>
+  <div class="col-6 col-xl-3"><div class="fd-stat-card blue"><div class="fd-stat-icon"><i class="bi bi-bag-check"></i></div><div class="fd-stat-value">{{ stats.total_orders }}</div><div class="fd-stat-label">{{ stats.delivered_orders }} delivered</div></div></div>
+  <div class="col-6 col-xl-3"><div class="fd-stat-card"><div class="fd-stat-icon"><i class="bi bi-calculator"></i></div><div class="fd-stat-value">{{ stats.avg_order_value|inr:0 }}</div><div class="fd-stat-label">Average order value</div></div></div>
+  <div class="col-6 col-xl-3"><div class="fd-stat-card amber"><div class="fd-stat-icon"><i class="bi bi-star"></i></div><div class="fd-stat-value">{{ stats.rating|default:"—" }}</div><div class="fd-stat-label">{{ stats.review_count }} reviews</div></div></div>
+  <div class="col-6 col-xl-3"><div class="fd-stat-card green"><div class="fd-stat-icon"><i class="bi bi-wallet2"></i></div><div class="fd-stat-value">{{ stats.payout|inr:0 }}</div><div class="fd-stat-label">Your payout (after commission)</div></div></div>
+</div>
+
+<div class="row g-3 mb-4">
+  <div class="col-lg-7">
+    <div class="fd-card fd-card-body h-100">
+      <h2 class="h6 fw-bold mb-3">Sales — last 7 days</h2>
+      <div class="fd-chart">
+        {% for day in chart %}
+          <div class="fd-chart-bar" title="{{ day.date }}: {{ day.revenue|inr:0 }} • {{ day.orders }} orders">
+            <div class="fd-bar" style="height:{{ day.revenue|percent_of:max_revenue }}%"></div>
+            <span class="fd-bar-label">{{ day.label }}</span>
+          </div>
+        {% endfor %}
+      </div>
+    </div>
+  </div>
+  <div class="col-lg-5">
+    <div class="fd-card fd-card-body h-100">
+      <div class="d-flex justify-content-between align-items-center mb-3">
+        <h2 class="h6 fw-bold mb-0">New orders</h2>
+        <a class="small" href="{% url 'dashboard:restaurant_orders' %}?status=new">All new</a>
+      </div>
+      {% for order in new_orders %}
+        <div class="border rounded-3 p-3 mb-2">
+          <div class="d-flex justify-content-between">
+            <div>
+              <div class="fw-bold small">#{{ order.order_number }}</div>
+              <div class="text-muted-2" style="font-size:.75rem">{{ order.customer_name }} • {{ order.items_total_quantity }} items</div>
+              <div class="text-muted-2" style="font-size:.75rem">{{ order.created_at|timesince }} ago</div>
+            </div>
+            <div class="text-end">
+              <div class="fw-bold">{{ order.total_amount|inr:0 }}</div>
+              <span class="fd-badge {{ order.order_status|status_class }}">{{ order.status_label }}</span>
+            </div>
+          </div>
+          <div class="d-flex gap-2 mt-2">
+            <form method="post" action="{% url 'dashboard:restaurant_order_action' order.order_number 'accept' %}" class="flex-grow-1">
+              {% csrf_token %}
+              <input type="hidden" name="next" value="{% url 'dashboard:restaurant_home' %}">
+              <button class="btn btn-brand btn-sm w-100" type="submit">Accept order</button>
+            </form>
+            <a class="btn btn-light btn-sm" href="{% url 'dashboard:restaurant_order_detail' order.order_number %}">View</a>
+          </div>
+        </div>
+      {% empty %}
+        <p class="small text-muted-2 mb-0">No new orders right now. Your kitchen is all caught up. 🎉</p>
+      {% endfor %}
+    </div>
+  </div>
+</div>
+
+<div class="row g-3">
+  <div class="col-lg-7">
+    <div class="fd-card fd-card-body h-100">
+      <div class="d-flex justify-content-between align-items-center mb-3">
+        <h2 class="h6 fw-bold mb-0">Orders in progress</h2>
+        <a class="small" href="{% url 'dashboard:restaurant_orders' %}">Manage orders</a>
+      </div>
+      <div class="fd-table-scroll">
+        <table class="fd-table">
+          <thead><tr><th>Order</th><th>Customer</th><th>Items</th><th>Amount</th><th>Status</th><th></th></tr></thead>
+          <tbody>
+            {% for order in active_orders %}
+              <tr>
+                <td class="fw-semibold">#{{ order.order_number }}</td>
+                <td class="small">{{ order.customer_name|truncatechars:16 }}</td>
+                <td class="small">{{ order.items_total_quantity }}</td>
+                <td class="fw-semibold">{{ order.total_amount|inr:0 }}</td>
+                <td><span class="fd-badge {{ order.order_status|status_class }}">{{ order.status_label }}</span></td>
+                <td class="text-end"><a class="btn btn-sm btn-soft" href="{% url 'dashboard:restaurant_order_detail' order.order_number %}">Open</a></td>
+              </tr>
+            {% empty %}
+              <tr><td colspan="6" class="text-center text-muted-2 py-4">No active orders.</td></tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+
+  <div class="col-lg-5">
+    <div class="fd-card fd-card-body mb-3">
+      <h2 class="h6 fw-bold mb-3">Popular dishes</h2>
+      {% for food in popular_food %}
+        <div class="fd-list-row">
+          {% if food.image %}<img src="{{ food.image.url }}" class="fd-avatar" alt="">{% else %}<span class="fd-avatar">🍽️</span>{% endif %}
+          <div class="flex-grow-1">
+            <div class="fw-semibold small">{{ food.name|truncatechars:20 }}</div>
+            <div class="text-muted-2" style="font-size:.72rem">{{ food.order_count }} orders • {{ food.final_price|inr:0 }}</div>
+          </div>
+          {% if food.is_available %}<span class="fd-badge fd-badge-delivered">Live</span>{% else %}<span class="fd-badge fd-badge-cancelled">Off</span>{% endif %}
+        </div>
+      {% empty %}
+        <p class="small text-muted-2 mb-0">Add dishes to see your best sellers here.</p>
+      {% endfor %}
+    </div>
+
+    <div class="fd-card fd-card-body mb-3">
+      <h2 class="h6 fw-bold mb-3">Latest reviews</h2>
+      {% for review in recent_reviews %}
+        <div class="fd-list-row">
+          <span class="fd-stars">{{ review.rating|star_rating }}</span>
+          <div class="flex-grow-1">
+            <div class="small">{{ review.comment|default:"No comment"|truncatechars:70 }}</div>
+            <div class="text-muted-2" style="font-size:.72rem">{{ review.customer.full_name }} • {{ review.created_at|date:"d M" }}</div>
+          </div>
+        </div>
+      {% empty %}
+        <p class="small text-muted-2 mb-0">No reviews yet.</p>
+      {% endfor %}
+    </div>
+
+    {% if low_stock %}
+    <div class="fd-card fd-card-body">
+      <h2 class="h6 fw-bold mb-3">Currently unavailable</h2>
+      {% for food in low_stock %}
+        <div class="fd-list-row">
+          <span class="fd-badge fd-badge-cancelled">Off</span>
+          <div class="flex-grow-1 small">{{ food.name|truncatechars:22 }}</div>
+          <form method="post" action="{% url 'dashboard:restaurant_toggle_food' food.pk %}">
+            {% csrf_token %}
+            <input type="hidden" name="next" value="{% url 'dashboard:restaurant_home' %}">
+            <button class="btn btn-sm btn-soft" type="submit">Turn on</button>
+          </form>
+        </div>
+      {% endfor %}
+    </div>
+    {% endif %}
+  </div>
+</div>
+{% endblock %}

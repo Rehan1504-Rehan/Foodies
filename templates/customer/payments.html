@@ -1,0 +1,45 @@
+{% extends "partials/base.html" %}
+{% load static foodies_extras %}
+{% block title %}Payments — FOODIES{% endblock %}
+
+{% block body %}
+{% include "partials/customer_nav.html" %}
+<main class="container py-4">
+  <div class="d-flex justify-content-between align-items-end mb-4 flex-wrap gap-2">
+    <div>
+      <h1 class="h3 mb-1">Payments</h1>
+      <p class="text-muted-2 mb-0">Every payment made on your FOODIES account.</p>
+    </div>
+    <div class="fd-stat-card">
+      <div class="fd-stat-label">Total paid</div>
+      <div class="fd-stat-value">{{ total_paid|inr }}</div>
+    </div>
+  </div>
+
+  <div class="fd-table-wrap">
+    <div class="fd-table-scroll">
+      <table class="fd-table">
+        <thead>
+          <tr><th>Payment ID</th><th>Order</th><th>Restaurant</th><th>Method</th><th>Amount</th><th>Status</th><th>Date</th></tr>
+        </thead>
+        <tbody>
+          {% for payment in payments %}
+            <tr>
+              <td class="small text-muted-2">{{ payment.payment_id }}</td>
+              <td><a href="{% url 'orders:detail' payment.order.order_number %}">#{{ payment.order.order_number }}</a></td>
+              <td>{{ payment.order.restaurant.name|truncatechars:20 }}</td>
+              <td><span class="fd-badge fd-badge-soft">{{ payment.get_payment_method_display }}</span></td>
+              <td class="fw-bold">₹{{ payment.amount|floatformat:2 }}</td>
+              <td><span class="fd-badge {{ payment.status|status_class }}">{{ payment.get_status_display }}</span></td>
+              <td class="small text-muted-2">{{ payment.created_at|date:"d M Y, h:i A" }}</td>
+            </tr>
+          {% empty %}
+            <tr><td colspan="7" class="text-center text-muted-2 py-5">No payments recorded yet.</td></tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </div>
+</main>
+{% include "partials/footer.html" %}
+{% endblock %}

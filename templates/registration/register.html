@@ -1,0 +1,71 @@
+{% extends "partials/base.html" %}
+{% load static %}
+{% block title %}Create your {{ role_label }} account — FOODIES{% endblock %}
+
+{% block body %}
+<div class="fd-auth-wrap">
+  <aside class="fd-auth-aside">
+    <a class="fd-brand text-white" href="{% url 'core:home' %}">
+      <span class="fd-brand-mark">🍔</span>
+      <span>{{ SITE_NAME }}<small class="text-white-50">Good Food. Great Mood.</small></span>
+    </a>
+    <div class="position-relative" style="z-index:2">
+      <h1 class="display-6 fw-bold">
+        {% if role == 'restaurant' %}Grow your kitchen with FOODIES.
+        {% elif role == 'delivery' %}Ride with FOODIES.
+        {% else %}Welcome to FOODIES.{% endif %}
+      </h1>
+      <p class="text-white-50" style="max-width:420px">
+        {% if role == 'restaurant' %}
+          Add your menu, receive orders in real time, mark them ready for pickup and watch your sales grow.
+        {% elif role == 'delivery' %}
+          Accept deliveries, follow the fastest routes and track your earnings day by day.
+        {% else %}
+          Discover local kitchens, apply coupons and track every order from the pan to your plate.
+        {% endif %}
+      </p>
+      <ul class="list-unstyled small text-white-50 d-grid gap-2">
+        <li><i class="bi bi-check-circle-fill me-2"></i>Secure password hashing</li>
+        <li><i class="bi bi-check-circle-fill me-2"></i>Role-based access from day one</li>
+        <li><i class="bi bi-check-circle-fill me-2"></i>Database-backed carts, orders &amp; payments</li>
+      </ul>
+    </div>
+    <div class="small text-white-50 position-relative" style="z-index:2">Already registered? <a class="text-white" href="{% url 'accounts:login' %}">Log in</a></div>
+  </aside>
+
+  <main class="fd-auth-main">
+    <div class="fd-auth-card">
+      <h2 class="h3 mb-1">Create your {{ role_label }} account</h2>
+      <p class="text-muted-2">It takes less than a minute.</p>
+
+      <div class="row g-2 my-4">
+        <div class="col-4"><a class="btn w-100 btn-sm {% if role == 'customer' %}btn-brand{% else %}btn-soft{% endif %}" href="{% url 'accounts:register_customer' %}">Customer</a></div>
+        <div class="col-4"><a class="btn w-100 btn-sm {% if role == 'restaurant' %}btn-brand{% else %}btn-soft{% endif %}" href="{% url 'accounts:register_restaurant' %}">Restaurant</a></div>
+        <div class="col-4"><a class="btn w-100 btn-sm {% if role == 'delivery' %}btn-brand{% else %}btn-soft{% endif %}" href="{% url 'accounts:register_delivery' %}">Delivery</a></div>
+      </div>
+
+      {% if form.non_field_errors %}
+        <div class="alert alert-danger small rounded-3">{% for error in form.non_field_errors %}<div>{{ error }}</div>{% endfor %}</div>
+      {% endif %}
+
+      <form method="post" enctype="multipart/form-data">
+        {% csrf_token %}
+        <div class="row g-3">
+          {% for field in form %}
+            <div class="{% if field.name in 'first_name last_name email phone' %}col-md-6{% else %}col-12{% endif %}">
+              <label class="form-label" for="{{ field.id_for_label }}">{{ field.label }}{% if field.field.required %} <span class="text-danger">*</span>{% endif %}</label>
+              {{ field }}
+              {% if field.help_text %}<div class="form-text small">{{ field.help_text|safe }}</div>{% endif %}
+              {% for error in field.errors %}<div class="text-danger small">{{ error }}</div>{% endfor %}
+            </div>
+          {% endfor %}
+        </div>
+        <button class="btn btn-brand btn-lg w-100 mt-4" type="submit">
+          <i class="bi bi-person-plus me-2"></i>Create account
+        </button>
+      </form>
+      <p class="small text-muted-2 mt-3 mb-0">By continuing you agree to the FOODIES terms of service and privacy policy.</p>
+    </div>
+  </main>
+</div>
+{% endblock %}

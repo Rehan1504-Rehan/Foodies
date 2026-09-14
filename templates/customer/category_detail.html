@@ -1,0 +1,49 @@
+{% extends "partials/base.html" %}
+{% load static foodies_extras %}
+{% block title %}{{ category.name }} on FOODIES — {{ food_count }} dishes{% endblock %}
+
+{% block body %}
+{% include "partials/customer_nav.html" %}
+<main class="container py-4">
+  <nav aria-label="breadcrumb">
+    <ol class="breadcrumb small">
+      <li class="breadcrumb-item"><a href="{% url 'core:home' %}">Home</a></li>
+      <li class="breadcrumb-item"><a href="{% url 'menu:list' %}">Categories</a></li>
+      <li class="breadcrumb-item active">{{ category.name }}</li>
+    </ol>
+  </nav>
+
+  <div class="fd-card fd-card-body mb-4 d-flex flex-wrap align-items-center gap-3">
+    <span class="fd-category-icon" style="width:72px;height:72px;font-size:2rem">
+      {% if category.image %}<img src="{{ category.image.url }}" alt="{{ category.name }}">{% else %}{{ category.emoji }}{% endif %}
+    </span>
+    <div class="flex-grow-1">
+      <h1 class="h3 mb-1">{{ category.name }}</h1>
+      <p class="text-muted-2 mb-0">{{ category.description|default:"Delicious picks from kitchens around you." }}</p>
+    </div>
+    <div class="d-flex gap-4">
+      <div class="fd-mini-stat"><strong>{{ food_count }}</strong><span>Dishes</span></div>
+      <div class="fd-mini-stat"><strong>{{ restaurant_count }}</strong><span>Restaurants</span></div>
+    </div>
+  </div>
+
+  {% if restaurants %}
+  <h2 class="h5 mb-3">Kitchens serving {{ category.name }}</h2>
+  <div class="row g-4 mb-5">
+    {% for restaurant in restaurants %}
+      <div class="col-md-6 col-lg-3">{% include "partials/restaurant_card.html" %}</div>
+    {% endfor %}
+  </div>
+  {% endif %}
+
+  <h2 class="h5 mb-3">Popular {{ category.name|lower }} dishes</h2>
+  <div class="fd-card fd-card-body">
+    {% for food in foods %}
+      {% include "partials/food_row.html" with food=food show_restaurant=True %}
+    {% empty %}
+      {% include "partials/empty.html" with icon="🍲" title="No dishes in this category yet" message="New dishes are added regularly." action_url="/restaurants/" action_label="Browse restaurants" %}
+    {% endfor %}
+  </div>
+</main>
+{% include "partials/footer.html" %}
+{% endblock %}

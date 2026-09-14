@@ -1,0 +1,171 @@
+{% extends "partials/base.html" %}
+{% load static foodies_extras %}
+{% block title %}Checkout — FOODIES{% endblock %}
+
+{% block body %}
+{% include "partials/customer_nav.html" %}
+<main class="container py-4">
+  <div class="d-flex align-items-center justify-content-between flex-wrap gap-2 mb-4">
+    <h1 class="h3 mb-0">Checkout</h1>
+    <div class="d-flex gap-2 small text-muted-2">
+      <span class="fd-chip active">1. Cart</span>
+      <span class="fd-chip active">2. Address</span>
+      <span class="fd-chip active">3. Payment</span>
+      <span class="fd-chip">4. Confirmation</span>
+    </div>
+  </div>
+
+  <form method="post" id="checkoutForm">
+    {% csrf_token %}
+    <div class="row g-4">
+      <div class="col-lg-8">
+        <!-- Address -->
+        <section class="fd-card fd-card-body mb-4">
+          <div class="d-flex justify-content-between align-items-center mb-3">
+            <h2 class="h6 fw-bold mb-0"><i class="bi bi-geo-alt me-2"></i>Delivery address</h2>
+            <button type="button" class="btn btn-sm btn-soft" data-bs-toggle="modal" data-bs-target="#addAddressModal">
+              <i class="bi bi-plus-lg me-1"></i>Add new
+            </button>
+          </div>
+
+          {% if addresses %}
+            <div class="row g-3">
+              {% for address in addresses %}
+                <div class="col-md-6">
+                  <label class="fd-role-pill h-100 {% if default_address and default_address.pk == address.pk %}active{% endif %}" data-address-card>
+                    <input type="radio" name="address_id" value="{{ address.pk }}" {% if default_address and default_address.pk == address.pk %}checked{% endif %} required>
+                    <div class="d-flex justify-content-between align-items-start">
+                      <span class="fd-badge fd-badge-soft">{{ address.get_address_type_display }}</span>
+                      {% if address.is_default %}<span class="fd-badge fd-badge-delivered">Default</span>{% endif %}
+                    </div>
+                    <div class="fw-bold mt-2">{{ address.full_name }}</div>
+                    <div class="small text-muted-2">{{ address.full_address }}</div>
+                    <div class="small text-muted-2 mt-1"><i class="bi bi-telephone me-1"></i>{{ address.phone }}</div>
+                  </label>
+                </div>
+              {% endfor %}
+            </div>
+          {% else %}
+            {% include "partials/empty.html" with icon="📍" title="No delivery address yet" message="Add an address so we know where to bring your food." %}
+          {% endif %}
+        </section>
+
+        <!-- Instructions -->
+        <section class="fd-card fd-card-body mb-4">
+          <h2 class="h6 fw-bold mb-3"><i class="bi bi-chat-left-text me-2"></i>Delivery instructions (optional)</h2>
+          <input class="form-control" name="special_instructions" maxlength="255" placeholder="e.g. Ring the bell twice, leave at the door">
+        </section>
+
+        <!-- Payment -->
+        <section class="fd-card fd-card-body">
+          <h2 class="h6 fw-bold mb-3"><i class="bi bi-credit-card me-2"></i>Payment method</h2>
+
+          <label class="fd-role-pill active mb-2 d-flex align-items-center gap-3" data-payment-card>
+            <input type="radio" name="payment_method" value="COD" checked data-payment-method>
+            <i class="bi bi-cash-coin fs-3 text-success"></i>
+            <span class="flex-grow-1">
+              <span class="fw-bold d-block">Cash on delivery</span>
+              <span class="small text-muted-2">Pay the delivery partner when your food arrives.</span>
+            </span>
+          </label>
+
+          {% if razorpay_enabled %}
+            <label class="fd-role-pill mb-2 d-flex align-items-center gap-3" data-payment-card>
+              <input type="radio" name="payment_method" value="RAZORPAY" data-payment-method>
+              <i class="bi bi-credit-card-2-front fs-3 text-primary-brand"></i>
+              <span class="flex-grow-1">
+                <span class="fw-bold d-block">Pay online (Razorpay)</span>
+                <span class="small text-muted-2">UPI, cards, netbanking &amp; wallets — secured by Razorpay.</span>
+              </span>
+            </label>
+          {% else %}
+            <label class="fd-role-pill mb-2 d-flex align-items-center gap-3" data-payment-card>
+              <input type="radio" name="payment_method" value="MOCK" data-payment-method>
+              <i class="bi bi-lightning-charge fs-3 text-warning"></i>
+              <span class="flex-grow-1">
+                <span class="fw-bold d-block">Test gateway (local)</span>
+                <span class="small text-muted-2">Razorpay keys are not configured — use the built-in mock gateway to settle instantly.</span>
+              </span>
+            </label>
+          {% endif %}
+        </section>
+      </div>
+
+      <!-- Summary -->
+      <div class="col-lg-4">
+        <div class="fd-sticky-summary">
+          <div class="fd-card fd-card-body mb-3">
+            <h2 class="h6 fw-bold mb-3">{{ cart.restaurant.name }}</h2>
+            {% for item in cart.items %}
+              <div class="d-flex justify-content-between align-items-start small mb-2">
+                <span class="d-flex align-items-start gap-2">
+                  <span class="fd-veg-dot {% if not item.food_item.is_veg %}nonveg{% endif %}" style="margin-top:4px"></span>
+                  <span>{{ item.quantity }} × {{ item.food_item.name|truncatechars:28 }}</span>
+                </span>
+                <span class="fw-semibold">₹{{ item.line_total|floatformat:2 }}</span>
+              </div>
+            {% endfor %}
+            <div class="fd-divider"></div>
+            <div class="fd-bill-row"><span>Item total (MRP)</span><span>₹{{ pricing.mrp_total|floatformat:2 }}</span></div>
+            {% if pricing.food_discount %}<div class="fd-bill-row discount"><span>Item discount</span><span>− ₹{{ pricing.food_discount|floatformat:2 }}</span></div>{% endif %}
+            <div class="fd-bill-row"><span>Subtotal</span><span>₹{{ pricing.subtotal|floatformat:2 }}</span></div>
+            {% if pricing.coupon_discount %}<div class="fd-bill-row discount"><span>Coupon ({{ pricing.coupon_code }})</span><span>− ₹{{ pricing.coupon_discount|floatformat:2 }}</span></div>{% endif %}
+            <div class="fd-bill-row"><span>Delivery fee</span><span>{% if pricing.delivery_fee %}₹{{ pricing.delivery_fee|floatformat:2 }}{% else %}<span class="text-success">FREE</span>{% endif %}</span></div>
+            <div class="fd-bill-row"><span>Taxes ({{ pricing.tax_percent }}% GST)</span><span>₹{{ pricing.tax|floatformat:2 }}</span></div>
+            <div class="fd-bill-row"><span>Platform fee</span><span>₹{{ pricing.platform_fee|floatformat:2 }}</span></div>
+            <div class="fd-bill-row total"><span>To pay</span><span>₹{{ pricing.total|floatformat:2 }}</span></div>
+            {% if pricing.total_savings %}
+              <div class="alert alert-success small mt-3 mb-0 rounded-3">You save ₹{{ pricing.total_savings|floatformat:2 }} 🎉</div>
+            {% endif %}
+          </div>
+
+          <button class="btn btn-brand btn-lg w-100" type="submit" {% if pricing.issues %}disabled{% endif %}>
+            <i class="bi bi-bag-check me-2"></i>Place order
+          </button>
+          {% if pricing.issues %}
+            <div class="alert alert-warning small mt-3 mb-0 rounded-3">
+              <ul class="mb-0 ps-3">
+                {% for issue in pricing.issues %}<li>{{ issue }}</li>{% endfor %}
+              </ul>
+            </div>
+          {% endif %}
+          <a class="btn btn-light w-100 mt-2" href="{% url 'cart:detail' %}">Back to cart</a>
+        </div>
+      </div>
+    </div>
+  </form>
+
+  <!-- Add address modal -->
+  <div class="modal fade" id="addAddressModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered modal-lg">
+      <div class="modal-content rounded-2xl border-0">
+        <div class="modal-header border-0">
+          <h5 class="modal-title fw-bold">Add a delivery address</h5>
+          <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+        </div>
+        <div class="modal-body">
+          <form method="post" action="{% url 'accounts:address_create' %}" id="addressAjaxForm">
+            {% csrf_token %}
+            <input type="hidden" name="next" value="{% url 'payments:checkout' %}">
+            <div class="row g-3">
+              {% for field in address_form %}
+                <div class="col-md-6">
+                  <label class="form-label" for="{{ field.id_for_label }}">{{ field.label }}</label>
+                  {{ field }}
+                  {% if field.help_text %}<div class="form-text">{{ field.help_text }}</div>{% endif %}
+                  {% for error in field.errors %}<div class="text-danger small">{{ error }}</div>{% endfor %}
+                </div>
+              {% endfor %}
+            </div>
+            <div class="d-flex gap-2 mt-4">
+              <button class="btn btn-brand flex-grow-1" type="submit">Save address</button>
+              <button class="btn btn-light" type="button" data-bs-dismiss="modal">Cancel</button>
+            </div>
+          </form>
+        </div>
+      </div>
+    </div>
+  </div>
+</main>
+{% include "partials/footer.html" %}
+{% endblock %}

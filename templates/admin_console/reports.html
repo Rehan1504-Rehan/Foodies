@@ -1,0 +1,121 @@
+{% extends "admin_console/base.html" %}
+{% load foodies_extras %}
+{% block title %}Reports — FOODIES Admin{% endblock %}
+{% block page_heading %}Business reports{% endblock %}
+
+{% block content %}
+<div class="d-flex flex-wrap gap-2 mb-3">
+  <a class="fd-chip {% if days == 7 %}active{% endif %}" href="?days=7">Last 7 days</a>
+  <a class="fd-chip {% if days == 30 %}active{% endif %}" href="?days=30">Last 30 days</a>
+  <a class="fd-chip {% if days == 90 %}active{% endif %}" href="?days=90">Last 90 days</a>
+  <a class="fd-chip {% if days == 365 %}active{% endif %}" href="?days=365">Last 12 months</a>
+</div>
+
+<div class="row g-3 mb-4">
+  <div class="col-6 col-lg-3"><div class="fd-stat-card"><div class="fd-stat-icon"><i class="bi bi-bag"></i></div><div class="fd-stat-value">{{ summary.orders }}</div><div class="fd-stat-label">Orders in period</div></div></div>
+  <div class="col-6 col-lg-3"><div class="fd-stat-card green"><div class="fd-stat-icon"><i class="bi bi-cash"></i></div><div class="fd-stat-value">{{ summary.revenue|inr:0 }}</div><div class="fd-stat-label">Delivered revenue</div></div></div>
+  <div class="col-6 col-lg-3"><div class="fd-stat-card amber"><div class="fd-stat-icon"><i class="bi bi-graph-up"></i></div><div class="fd-stat-value">{{ summary.avg_order|inr:0 }}</div><div class="fd-stat-label">Average order value</div></div></div>
+  <div class="col-6 col-lg-3"><div class="fd-stat-card violet"><div class="fd-stat-icon"><i class="bi bi-person-plus"></i></div><div class="fd-stat-value">{{ summary.new_customers }}</div><div class="fd-stat-label">New customers</div></div></div>
+</div>
+
+<div class="row g-3">
+  <div class="col-lg-6">
+    <div class="fd-card fd-card-body h-100">
+      <h2 class="h6 fw-bold mb-3">Top restaurants by revenue</h2>
+      <div class="fd-table-scroll">
+        <table class="fd-table">
+          <thead><tr><th>#</th><th>Restaurant</th><th>Orders</th><th class="text-end">Revenue</th></tr></thead>
+          <tbody>
+            {% for restaurant in top_restaurants %}
+              <tr>
+                <td>{{ forloop.counter }}</td>
+                <td class="fw-semibold">{{ restaurant.name|truncatechars:24 }}</td>
+                <td>{{ restaurant.orders_count }}</td>
+                <td class="text-end fw-bold">{{ restaurant.revenue|default:0|inr:0 }}</td>
+              </tr>
+            {% empty %}
+              <tr><td colspan="4" class="text-center text-muted-2 py-4">No data in this period.</td></tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+
+  <div class="col-lg-6">
+    <div class="fd-card fd-card-body h-100">
+      <h2 class="h6 fw-bold mb-3">Best selling dishes</h2>
+      <div class="fd-table-scroll">
+        <table class="fd-table">
+          <thead><tr><th>#</th><th>Dish</th><th>Sold</th><th class="text-end">Revenue</th></tr></thead>
+          <tbody>
+            {% for food in top_food %}
+              <tr>
+                <td>{{ forloop.counter }}</td>
+                <td>
+                  <div class="fw-semibold">{{ food.name|truncatechars:22 }}</div>
+                  <div class="text-muted-2" style="font-size:.72rem">{{ food.restaurant.name|truncatechars:20 }}</div>
+                </td>
+                <td>{{ food.sold }}</td>
+                <td class="text-end fw-bold">{{ food.revenue|default:0|inr:0 }}</td>
+              </tr>
+            {% empty %}
+              <tr><td colspan="4" class="text-center text-muted-2 py-4">No data in this period.</td></tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+
+  <div class="col-lg-6">
+    <div class="fd-card fd-card-body h-100">
+      <h2 class="h6 fw-bold mb-3">Top customers</h2>
+      <div class="fd-table-scroll">
+        <table class="fd-table">
+          <thead><tr><th>Customer</th><th>Orders</th><th class="text-end">Spent</th></tr></thead>
+          <tbody>
+            {% for customer in top_customers %}
+              <tr>
+                <td>
+                  <div class="fw-semibold">{{ customer.full_name }}</div>
+                  <div class="text-muted-2" style="font-size:.72rem">{{ customer.email }}</div>
+                </td>
+                <td>{{ customer.orders_count }}</td>
+                <td class="text-end fw-bold">{{ customer.spent|default:0|inr:0 }}</td>
+              </tr>
+            {% empty %}
+              <tr><td colspan="3" class="text-center text-muted-2 py-4">No data in this period.</td></tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+
+  <div class="col-lg-6">
+    <div class="fd-card fd-card-body h-100">
+      <h2 class="h6 fw-bold mb-3">Delivery partner performance</h2>
+      <div class="fd-table-scroll">
+        <table class="fd-table">
+          <thead><tr><th>Partner</th><th>Deliveries</th><th class="text-end">Payout</th></tr></thead>
+          <tbody>
+            {% for partner in partner_report %}
+              <tr>
+                <td>
+                  <div class="fw-semibold">{{ partner.full_name }}</div>
+                  <div class="text-muted-2" style="font-size:.72rem">{{ partner.phone }}</div>
+                </td>
+                <td>{{ partner.deliveries_count }}</td>
+                <td class="text-end fw-bold">{{ partner.payout|default:0|inr:0 }}</td>
+              </tr>
+            {% empty %}
+              <tr><td colspan="3" class="text-center text-muted-2 py-4">No delivery partners yet.</td></tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}

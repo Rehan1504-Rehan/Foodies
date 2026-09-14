@@ -1,0 +1,96 @@
+{% extends "admin_console/base.html" %}
+{% load foodies_extras %}
+{% block title %}Restaurant approvals — FOODIES Admin{% endblock %}
+{% block page_heading %}Restaurant approvals{% endblock %}
+
+{% block content %}
+<div class="row g-3 mb-4">
+  <div class="col-md-4">
+    <div class="fd-stat-card amber">
+      <div class="fd-stat-icon"><i class="bi bi-hourglass-split"></i></div>
+      <div class="fd-stat-value">{{ pending|length }}</div>
+      <div class="fd-stat-label">Waiting for review</div>
+    </div>
+  </div>
+  <div class="col-md-4">
+    <div class="fd-stat-card green">
+      <div class="fd-stat-icon"><i class="bi bi-patch-check"></i></div>
+      <div class="fd-stat-value">{{ recent|length }}</div>
+      <div class="fd-stat-label">Recently approved</div>
+    </div>
+  </div>
+  <div class="col-md-4">
+    <div class="fd-stat-card">
+      <div class="fd-stat-icon"><i class="bi bi-info-circle"></i></div>
+      <div class="fd-stat-value">2</div>
+      <div class="fd-stat-label">Minimum cuisine types required</div>
+    </div>
+  </div>
+</div>
+
+<div class="row g-3">
+  {% for restaurant in pending %}
+    <div class="col-lg-6">
+      <div class="fd-card fd-card-body h-100">
+        <div class="d-flex gap-3">
+          {% if restaurant.cover_image %}
+            <img src="{{ restaurant.cover_image.url }}" class="rounded-3 object-cover" style="width:120px;height:96px" alt="">
+          {% else %}
+            <div class="rounded-3 bg-soft d-grid" style="width:120px;height:96px;place-items:center;font-size:2rem">🏪</div>
+          {% endif %}
+          <div class="flex-grow-1">
+            <h2 class="h6 fw-bold mb-1">{{ restaurant.name }}</h2>
+            <div class="small text-muted-2">{{ restaurant.cuisine_type }}</div>
+            <div class="small text-muted-2">{{ restaurant.address }}, {{ restaurant.area }}, {{ restaurant.city }} - {{ restaurant.pincode }}</div>
+            <div class="small text-muted-2"><i class="bi bi-person me-1"></i>{{ restaurant.owner.full_name }} • {{ restaurant.owner.email }}</div>
+            <div class="small text-muted-2"><i class="bi bi-telephone me-1"></i>{{ restaurant.phone }}</div>
+            <div class="small text-muted-2"><i class="bi bi-clock me-1"></i>Registered {{ restaurant.created_at|date:"d M Y, h:i A" }}</div>
+          </div>
+        </div>
+        {% if restaurant.description %}<p class="small text-muted-2 mt-3 mb-0">{{ restaurant.description|truncatechars:150 }}</p>{% endif %}
+        <div class="fd-divider"></div>
+        <div class="d-flex gap-2 flex-wrap">
+          <form method="post" action="{% url 'dashboard:admin_approve_restaurant' restaurant.pk %}">
+            {% csrf_token %}
+            <input type="hidden" name="next" value="{% url 'dashboard:admin_approvals' %}">
+            <button class="btn btn-brand btn-sm" type="submit"><i class="bi bi-check2-circle me-1"></i>Approve &amp; publish</button>
+          </form>
+          <form method="post" action="{% url 'dashboard:admin_reject_restaurant' restaurant.pk %}" class="d-flex gap-2">
+            {% csrf_token %}
+            <input type="hidden" name="next" value="{% url 'dashboard:admin_approvals' %}">
+            <input class="form-control form-control-sm" name="reason" placeholder="Reason for rejection" style="max-width:220px">
+            <button class="btn btn-outline-danger btn-sm" type="submit">Reject</button>
+          </form>
+          <a class="btn btn-light btn-sm" href="{% url 'dashboard:admin_restaurant_detail' restaurant.pk %}">Inspect</a>
+        </div>
+      </div>
+    </div>
+  {% empty %}
+    <div class="col-12">
+      {% include "partials/empty.html" with icon="✅" title="No pending approvals" message="Every registered restaurant has been reviewed. Nice work!" %}
+    </div>
+  {% endfor %}
+</div>
+
+{% if recent %}
+  <h2 class="h6 fw-bold mt-4 mb-2">Recently approved</h2>
+  <div class="fd-table-wrap">
+    <div class="fd-table-scroll">
+      <table class="fd-table">
+        <thead><tr><th>Restaurant</th><th>Owner</th><th>City</th><th>Rating</th><th>Approved on</th></tr></thead>
+        <tbody>
+          {% for restaurant in recent %}
+            <tr>
+              <td><a href="{% url 'dashboard:admin_restaurant_detail' restaurant.pk %}" class="fw-semibold">{{ restaurant.name }}</a></td>
+              <td class="small text-muted-2">{{ restaurant.owner.email }}</td>
+              <td class="small">{{ restaurant.city }}</td>
+              <td>{% if restaurant.rating_count %}{{ restaurant.rating }}★{% else %}<span class="text-muted-2">New</span>{% endif %}</td>
+              <td class="small text-muted-2">{{ restaurant.updated_at|date:"d M Y" }}</td>
+            </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </div>
+{% endif %}
+{% endblock %}

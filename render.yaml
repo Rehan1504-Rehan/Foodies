@@ -1,0 +1,49 @@
+# ---------------------------------------------------------------------------
+# Render Blueprint for FOODIES — https://render.com/docs/blueprint-spec
+# Deploy with:  Dashboard → New → Blueprint → pick this repository
+# ---------------------------------------------------------------------------
+services:
+  - type: web
+    name: foodies
+    runtime: python
+    plan: starter
+    buildCommand: "./build.sh"
+    startCommand: "gunicorn foodies.wsgi:application --bind 0.0.0.0:$PORT --workers 3 --timeout 120"
+    healthCheckPath: /healthz/
+    autoDeploy: true
+    disk:
+      # Keeps uploaded food photos / logos across deploys.
+      name: foodies-media
+      mountPath: /var/foodies/media
+      sizeGB: 5
+    envVars:
+      - key: PYTHON_VERSION
+        value: 3.11.2
+      - key: SECRET_KEY
+        generateValue: true
+      - key: DEBUG
+        value: "False"
+      - key: ALLOWED_HOSTS
+        value: "*"
+      - key: MEDIA_ROOT
+        value: /var/foodies/media
+      - key: SECURE_SSL_REDIRECT
+        value: "True"
+      - key: SEED_DATA
+        value: "False"
+      - key: DATABASE_URL
+        fromDatabase:
+          name: foodies-db
+          property: connectionString
+      - key: RAZORPAY_KEY_ID
+        sync: false
+      - key: RAZORPAY_KEY_SECRET
+        sync: false
+      - key: PAYMENTS_MOCK_MODE
+        value: "True"
+
+databases:
+  - name: foodies-db
+    plan: starter
+    databaseName: foodies
+    user: foodies

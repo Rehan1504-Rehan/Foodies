@@ -1,0 +1,6 @@
+<div class="fd-empty">
+  <div class="fd-empty-icon">{{ icon|default:"🍽️" }}</div>
+  <h5 class="fw-bold mb-2">{{ title|default:"Nothing here yet" }}</h5>
+  <p class="text-muted-2 mb-3">{{ message|default:"Once there is something to show, it will appear right here." }}</p>
+  {% if action_url %}<a href="{{ action_url }}" class="btn btn-brand">{{ action_label|default:"Get started" }}</a>{% endif %}
+</div>

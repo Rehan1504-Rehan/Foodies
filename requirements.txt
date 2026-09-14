@@ -1,0 +1,10 @@
+# FOODIES — Python dependencies
+# Install with:  pip install -r requirements.txt
+Django==5.1.15
+djangorestframework==3.17.2
+Pillow==12.3.0
+python-dotenv==1.2.3
+dj-database-url==3.1.2
+psycopg2-binary==2.9.13
+gunicorn==26.2.0
+whitenoise==6.12.0

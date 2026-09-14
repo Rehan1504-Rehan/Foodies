@@ -1,0 +1,59 @@
+{% extends "delivery/base.html" %}
+{% load foodies_extras %}
+{% block title %}Earnings — FOODIES Partner{% endblock %}
+{% block page_heading %}My earnings{% endblock %}
+
+{% block content %}
+<div class="row g-3 mb-4">
+  <div class="col-6 col-xl-3"><div class="fd-stat-card green"><div class="fd-stat-icon"><i class="bi bi-cash-coin"></i></div><div class="fd-stat-value">{{ summary.today|inr:0 }}</div><div class="fd-stat-label">Today's earnings</div></div></div>
+  <div class="col-6 col-xl-3"><div class="fd-stat-card blue"><div class="fd-stat-icon"><i class="bi bi-calendar-week"></i></div><div class="fd-stat-value">{{ summary.week|inr:0 }}</div><div class="fd-stat-label">This week</div></div></div>
+  <div class="col-6 col-xl-3"><div class="fd-stat-card violet"><div class="fd-stat-icon"><i class="bi bi-calendar3"></i></div><div class="fd-stat-value">{{ summary.month|inr:0 }}</div><div class="fd-stat-label">This month</div></div></div>
+  <div class="col-6 col-xl-3"><div class="fd-stat-card amber"><div class="fd-stat-icon"><i class="bi bi-wallet2"></i></div><div class="fd-stat-value">{{ summary.total|inr:0 }}</div><div class="fd-stat-label">{{ summary.completed }} completed deliveries</div></div></div>
+</div>
+
+<div class="row g-3">
+  <div class="col-lg-7">
+    <div class="fd-card fd-card-body h-100">
+      <h2 class="h6 fw-bold mb-3">Last 7 days</h2>
+      <div class="fd-chart">
+        {% for day in chart %}
+          <div class="fd-chart-bar" title="{{ day.label }}: {{ day.value|inr:0 }}">
+            <div class="fd-bar green" style="height:{{ day.value|percent_of:summary.week }}%"></div>
+            <span class="fd-bar-label">{{ day.label }}</span>
+          </div>
+        {% endfor %}
+      </div>
+      <div class="fd-divider"></div>
+      <div class="fd-bill-row"><span>Pending payout</span><span class="fw-bold">{{ summary.pending|inr }}</span></div>
+      <div class="fd-bill-row"><span>Settled</span><span class="fw-bold">{{ summary.settled|inr }}</span></div>
+      <div class="fd-bill-row total"><span>Lifetime earnings</span><span>{{ summary.total|inr }}</span></div>
+    </div>
+  </div>
+  <div class="col-lg-5">
+    <div class="fd-card fd-card-body h-100">
+      <h2 class="h6 fw-bold mb-3">Earning history</h2>
+      <div style="max-height:460px;overflow:auto">
+        {% for entry in entries %}
+          <div class="fd-list-row">
+            <span class="fd-avatar"><i class="bi bi-cash"></i></span>
+            <div class="flex-grow-1">
+              <div class="fw-semibold small">
+                {% if entry.order %}Order #{{ entry.order.order_number }}{% else %}Adjustment{% endif %}
+              </div>
+              <div class="text-muted-2" style="font-size:.72rem">
+                {% if entry.order %}{{ entry.order.restaurant.name }} • {% endif %}{{ entry.created_at|date:"d M Y, h:i A" }}
+              </div>
+            </div>
+            <div class="text-end">
+              <div class="fw-bold small">+{{ entry.amount|inr }}</div>
+              <span class="fd-badge {{ entry.status|status_class }}">{{ entry.get_status_display }}</span>
+            </div>
+          </div>
+        {% empty %}
+          <p class="small text-muted-2 mb-0">No earnings yet — complete a delivery to get started.</p>
+        {% endfor %}
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}

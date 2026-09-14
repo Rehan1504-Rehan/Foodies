@@ -1,0 +1,119 @@
+{% extends "restaurant/base.html" %}
+{% load foodies_extras %}
+{% block title %}Order #{{ order.order_number }} — {{ restaurant.name }}{% endblock %}
+{% block page_heading %}Order #{{ order.order_number }}{% endblock %}
+
+{% block content %}
+<div class="row g-3">
+  <div class="col-lg-8">
+    <div class="fd-card fd-card-body mb-3">
+      <div class="d-flex justify-content-between flex-wrap gap-2">
+        <div>
+          <h2 class="h5 mb-1">{{ order.customer_name }}</h2>
+          <div class="small text-muted-2">{{ order.customer_phone }} • {{ order.customer.email }}</div>
+          <div class="small text-muted-2">{{ order.delivery_address_text }}</div>
+        </div>
+        <div class="text-end">
+          <span class="fd-badge {{ order.order_status|status_class }} fs-6">{{ order.status_label }}</span>
+          <div class="small text-muted-2 mt-1">Placed {{ order.created_at|date:"d M Y, h:i A" }}</div>
+        </div>
+      </div>
+      {% if order.special_instructions %}
+        <div class="alert alert-warning small mt-3 mb-0 rounded-3"><strong>Customer note:</strong> {{ order.special_instructions }}</div>
+      {% endif %}
+    </div>
+
+    <div class="fd-card fd-card-body mb-3">
+      <h2 class="h6 fw-bold mb-3">Items to prepare</h2>
+      <div class="fd-table-scroll">
+        <table class="fd-table">
+          <thead><tr><th>Dish</th><th>Type</th><th>Qty</th><th>Unit</th><th class="text-end">Total</th></tr></thead>
+          <tbody>
+            {% for item in order.items.all %}
+              <tr>
+                <td class="fw-semibold">{{ item.food_name }}<div class="text-muted-2" style="font-size:.72rem">{{ item.category_name }}</div></td>
+                <td><span class="fd-veg-dot {% if not item.is_veg %}nonveg{% endif %}"></span></td>
+                <td class="fw-bold">{{ item.quantity }}</td>
+                <td>{{ item.price|inr }}</td>
+                <td class="text-end fw-semibold">{{ item.total|inr }}</td>
+              </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <div class="fd-card fd-card-body">
+      <h2 class="h6 fw-bold mb-3">Order timeline</h2>
+      <ul class="fd-tracker">
+        {% for entry in order.status_history.all %}
+          <li class="done">
+            <span class="fd-track-dot"><i class="bi bi-check-lg"></i></span>
+            <div>
+              <div class="fw-semibold small">{{ entry.get_status_display }}</div>
+              <div class="text-muted-2" style="font-size:.75rem">{{ entry.created_at|date:"d M Y, h:i A" }}{% if entry.note %} • {{ entry.note }}{% endif %}</div>
+            </div>
+          </li>
+        {% empty %}
+          <li class="todo"><span class="fd-track-dot"><i class="bi bi-circle"></i></span><div class="small text-muted-2">No history yet.</div></li>
+        {% endfor %}
+      </ul>
+    </div>
+  </div>
+
+  <div class="col-lg-4">
+    <div class="fd-card fd-card-body mb-3">
+      <h2 class="h6 fw-bold mb-3">Actions</h2>
+      <div class="d-grid gap-2">
+        {% if order.order_status == 'PLACED' %}
+          <form method="post" action="{% url 'dashboard:restaurant_order_action' order.order_number 'accept' %}">
+            {% csrf_token %}<input type="hidden" name="next" value="{% url 'dashboard:restaurant_order_detail' order.order_number %}">
+            <button class="btn btn-brand w-100" type="submit"><i class="bi bi-check2-circle me-1"></i>Accept order</button>
+          </form>
+          <form method="post" action="{% url 'dashboard:restaurant_order_action' order.order_number 'reject' %}"
+                data-confirm="Reject this order?" data-confirm-title="Reject order">
+            {% csrf_token %}<input type="hidden" name="next" value="{% url 'dashboard:restaurant_order_detail' order.order_number %}">
+            <button class="btn btn-outline-danger w-100" type="submit"><i class="bi bi-x-circle me-1"></i>Reject order</button>
+          </form>
+        {% elif order.order_status == 'CONFIRMED' %}
+          <form method="post" action="{% url 'dashboard:restaurant_order_action' order.order_number 'preparing' %}">
+            {% csrf_token %}<input type="hidden" name="next" value="{% url 'dashboard:restaurant_order_detail' order.order_number %}">
+            <button class="btn btn-brand w-100" type="submit"><i class="bi bi-fire me-1"></i>Start preparing</button>
+          </form>
+        {% elif order.order_status == 'PREPARING' %}
+          <form method="post" action="{% url 'dashboard:restaurant_order_action' order.order_number 'ready' %}">
+            {% csrf_token %}<input type="hidden" name="next" value="{% url 'dashboard:restaurant_order_detail' order.order_number %}">
+            <button class="btn btn-brand w-100" type="submit"><i class="bi bi-box-seam me-1"></i>Mark ready for pickup</button>
+          </form>
+        {% else %}
+          <div class="alert alert-light small mb-0 rounded-3">No action needed — this order is {{ order.status_label|lower }}.</div>
+        {% endif %}
+        <a class="btn btn-light" href="{% url 'dashboard:restaurant_orders' %}">Back to orders</a>
+      </div>
+    </div>
+
+    <div class="fd-card fd-card-body mb-3">
+      <h2 class="h6 fw-bold mb-3">Bill</h2>
+      <div class="fd-bill-row"><span>Subtotal</span><span>{{ order.subtotal|inr }}</span></div>
+      <div class="fd-bill-row discount"><span>Item discount</span><span>− {{ order.discount|inr }}</span></div>
+      {% if order.coupon_discount %}<div class="fd-bill-row discount"><span>Coupon {% if order.coupon %}{{ order.coupon.code }}{% endif %}</span><span>− {{ order.coupon_discount|inr }}</span></div>{% endif %}
+      <div class="fd-bill-row"><span>Delivery fee</span><span>{{ order.delivery_fee|inr }}</span></div>
+      <div class="fd-bill-row"><span>Taxes</span><span>{{ order.tax|inr }}</span></div>
+      <div class="fd-bill-row total"><span>Customer paid</span><span>{{ order.total_amount|inr }}</span></div>
+      <div class="fd-divider"></div>
+      <div class="fd-bill-row"><span class="small text-muted-2">Your payout (85%)</span><span class="fw-semibold">{{ order.restaurant_earning|inr }}</span></div>
+    </div>
+
+    <div class="fd-card fd-card-body">
+      <h2 class="h6 fw-bold mb-3">Delivery</h2>
+      {% if order.delivery_boy %}
+        <div class="small fw-semibold">{{ order.delivery_boy.full_name }}</div>
+        <div class="small text-muted-2">{{ order.delivery_boy.phone }}</div>
+        {% if order.assignment %}<div class="small text-muted-2">Delivery status: {{ order.assignment.get_status_display }}</div>{% endif %}
+      {% else %}
+        <p class="small text-muted-2 mb-0">A delivery partner is assigned by FOODIES once the order is ready for pickup.</p>
+      {% endif %}
+    </div>
+  </div>
+</div>
+{% endblock %}

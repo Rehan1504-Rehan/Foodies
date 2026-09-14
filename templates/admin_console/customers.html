@@ -1,0 +1,72 @@
+{% extends "admin_console/base.html" %}
+{% load static foodies_extras %}
+{% block title %}Customers — FOODIES Admin{% endblock %}
+{% block page_heading %}Customer management{% endblock %}
+
+{% block content %}
+<div class="fd-card fd-card-body mb-3">
+  <form class="row g-2 align-items-end" method="get">
+    <div class="col-md-5">
+      <label class="form-label small" for="q">Search customers</label>
+      <input class="form-control" id="q" type="search" name="q" value="{{ q }}" placeholder="Name, email or phone">
+    </div>
+    <div class="col-md-3">
+      <label class="form-label small" for="status">Account status</label>
+      <select class="form-select" id="status" name="status">
+        <option value="">All accounts</option>
+        <option value="active" {% if status == 'active' %}selected{% endif %}>Active</option>
+        <option value="blocked" {% if status == 'blocked' %}selected{% endif %}>Blocked</option>
+      </select>
+    </div>
+    <div class="col-md-4 d-flex gap-2">
+      <button class="btn btn-brand flex-grow-1" type="submit">Filter</button>
+      <a class="btn btn-light" href="{% url 'dashboard:admin_customers' %}">Reset</a>
+    </div>
+  </form>
+</div>
+
+<div class="fd-table-wrap">
+  <div class="fd-table-scroll">
+    <table class="fd-table">
+      <thead>
+        <tr><th>Customer</th><th>Contact</th><th>Orders</th><th>Spent</th><th>Joined</th><th>Status</th><th class="text-end">Actions</th></tr>
+      </thead>
+      <tbody>
+        {% for customer in customers %}
+          <tr>
+            <td>
+              <div class="d-flex align-items-center gap-2">
+                {% if customer.profile_image %}<img src="{{ customer.profile_image.url }}" class="fd-avatar" style="width:34px;height:34px" alt="">{% else %}<span class="fd-avatar" style="width:34px;height:34px;font-size:.75rem">{{ customer.initials }}</span>{% endif %}
+                <div>
+                  <div class="fw-semibold">{{ customer.full_name }}</div>
+                  <div class="text-muted-2" style="font-size:.72rem">{{ customer.email }}</div>
+                </div>
+              </div>
+            </td>
+            <td class="small text-muted-2">{{ customer.phone|default:"—" }}</td>
+            <td class="fw-semibold">{{ customer.order_count }}</td>
+            <td class="fw-semibold">{{ customer.spent|default:0|inr:0 }}</td>
+            <td class="small text-muted-2">{{ customer.date_joined|date:"d M Y" }}</td>
+            <td>
+              {% if customer.is_active %}<span class="fd-badge fd-badge-delivered">Active</span>
+              {% else %}<span class="fd-badge fd-badge-cancelled">Blocked</span>{% endif %}
+            </td>
+            <td class="text-end">
+              <form method="post" action="{% url 'dashboard:admin_toggle_user' customer.pk %}" class="d-inline"
+                    data-confirm="{% if customer.is_active %}Block{% else %}Unblock{% endif %} {{ customer.full_name }}?" data-confirm-title="{% if customer.is_active %}Block{% else %}Unblock{% endif %} account">
+                {% csrf_token %}
+                <input type="hidden" name="next" value="{% url 'dashboard:admin_customers' %}">
+                <button class="btn btn-sm {% if customer.is_active %}btn-outline-danger{% else %}btn-brand{% endif %}" type="submit">
+                  {% if customer.is_active %}Block{% else %}Unblock{% endif %}
+                </button>
+              </form>
+            </td>
+          </tr>
+        {% empty %}
+          <tr><td colspan="7" class="text-center text-muted-2 py-5">No customers found.</td></tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+{% endblock %}

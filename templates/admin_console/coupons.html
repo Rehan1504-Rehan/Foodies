@@ -1,0 +1,74 @@
+{% extends "admin_console/base.html" %}
+{% load foodies_extras %}
+{% block title %}Coupons — FOODIES Admin{% endblock %}
+{% block page_heading %}Coupon management{% endblock %}
+
+{% block content %}
+<div class="row g-3">
+  <div class="col-xl-8">
+    <div class="fd-table-wrap">
+      <div class="fd-table-scroll">
+        <table class="fd-table">
+          <thead><tr><th>Code</th><th>Discount</th><th>Min order</th><th>Validity</th><th>Usage</th><th>Scope</th><th>Status</th><th class="text-end">Actions</th></tr></thead>
+          <tbody>
+            {% for coupon in coupons %}
+              <tr>
+                <td>
+                  <div class="fw-bold">{{ coupon.code }}</div>
+                  <div class="text-muted-2" style="font-size:.72rem">{{ coupon.title|default:coupon.description|truncatechars:28 }}</div>
+                </td>
+                <td>
+                  <div class="fw-semibold">{{ coupon.display_value }}</div>
+                  <div class="text-muted-2" style="font-size:.72rem">Max {{ coupon.maximum_discount|inr:0 }}</div>
+                </td>
+                <td class="small">{{ coupon.minimum_order|inr:0 }}</td>
+                <td class="small text-muted-2">{{ coupon.valid_from|date:"d M y" }} → {{ coupon.valid_until|date:"d M y" }}</td>
+                <td class="small">{{ coupon.used_count }}/{{ coupon.usage_limit }}<div class="text-muted-2" style="font-size:.72rem">{{ coupon.redemptions_count }} redemptions</div></td>
+                <td class="small">{% if coupon.restaurant %}{{ coupon.restaurant.name|truncatechars:16 }}{% else %}<span class="fd-badge fd-badge-soft">Platform-wide</span>{% endif %}</td>
+                <td>
+                  {% if not coupon.is_active %}<span class="fd-badge fd-badge-soft">Inactive</span>
+                  {% elif coupon.is_expired %}<span class="fd-badge fd-badge-cancelled">Expired</span>
+                  {% else %}<span class="fd-badge fd-badge-delivered">Live</span>{% endif %}
+                </td>
+                <td class="text-end">
+                  <div class="d-flex gap-1 justify-content-end">
+                    <a class="btn btn-sm btn-soft" href="{% url 'dashboard:admin_coupon_edit' coupon.pk %}">Edit</a>
+                    <form method="post" action="{% url 'dashboard:admin_toggle_coupon' coupon.pk %}">
+                      {% csrf_token %}
+                      <button class="btn btn-sm btn-light" type="submit">{% if coupon.is_active %}Pause{% else %}Activate{% endif %}</button>
+                    </form>
+                    <form method="post" action="{% url 'dashboard:admin_delete_coupon' coupon.pk %}" data-confirm="Delete coupon {{ coupon.code }}?" data-confirm-title="Delete coupon">
+                      {% csrf_token %}
+                      <button class="btn btn-sm btn-outline-danger" type="submit"><i class="bi bi-trash3"></i></button>
+                    </form>
+                  </div>
+                </td>
+              </tr>
+            {% empty %}
+              <tr><td colspan="8" class="text-center text-muted-2 py-5">No coupons yet — create the first offer.</td></tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+
+  <div class="col-xl-4">
+    <div class="fd-card fd-card-body">
+      <h2 class="h6 fw-bold mb-3">Create a coupon</h2>
+      <form method="post" action="{% url 'dashboard:admin_coupon_create' %}">
+        {% csrf_token %}
+        {% for field in form %}
+          <div class="mb-3">
+            <label class="form-label" for="{{ field.id_for_label }}">{{ field.label }}</label>
+            {{ field }}
+            {% if field.help_text %}<div class="form-text">{{ field.help_text }}</div>{% endif %}
+            {% for error in field.errors %}<div class="text-danger small">{{ error }}</div>{% endfor %}
+          </div>
+        {% endfor %}
+        <button class="btn btn-brand w-100" type="submit"><i class="bi bi-plus-lg me-1"></i>Create coupon</button>
+      </form>
+    </div>
+  </div>
+</div>
+{% endblock %}

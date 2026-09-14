@@ -1,0 +1,94 @@
+{% extends "partials/base.html" %}
+{% load static foodies_extras %}
+{% block title %}Pay for order #{{ order.order_number }} — FOODIES{% endblock %}
+
+{% block body %}
+{% include "partials/customer_nav.html" %}
+<main class="container py-4">
+  <div class="row justify-content-center">
+    <div class="col-lg-6">
+      <div class="fd-card fd-card-body text-center">
+        <div class="fd-empty-icon mx-auto mb-3"><i class="bi bi-credit-card-2-front"></i></div>
+        <h1 class="h4 fw-bold">Complete your payment</h1>
+        <p class="text-muted-2">Order <strong>#{{ order.order_number }}</strong> from {{ order.restaurant.name }}</p>
+
+        <div class="fd-bill-row total"><span>Amount payable</span><span>₹{{ order.total_amount|floatformat:2 }}</span></div>
+        <div class="small text-muted-2 mb-4">Payment status: <span class="fd-badge {{ order.payment_status|status_class }}">{{ order.get_payment_status_display }}</span></div>
+
+        {% if mock_mode %}
+          <div class="alert alert-warning small rounded-3 text-start">
+            <i class="bi bi-info-circle me-1"></i>
+            <strong>Test gateway active.</strong> Razorpay keys are not configured, so FOODIES settles this payment instantly
+            against the database. Set <code>RAZORPAY_KEY_ID</code> and <code>RAZORPAY_KEY_SECRET</code> to use the real gateway.
+          </div>
+          <form method="post" action="{% url 'payments:mock' order.order_number %}" class="d-grid gap-2">
+            {% csrf_token %}
+            <button class="btn btn-brand btn-lg" type="submit"><i class="bi bi-check2-circle me-2"></i>Pay ₹{{ order.total_amount|floatformat:2 }} now</button>
+            <button class="btn btn-outline-danger" type="submit" name="simulate" value="failure"><i class="bi bi-x-circle me-2"></i>Simulate a failed payment</button>
+          </form>
+        {% else %}
+          {% if gateway_error %}
+            <div class="alert alert-danger small rounded-3 text-start">{{ gateway_error }}</div>
+          {% endif %}
+          <div class="d-grid gap-2">
+            <button class="btn btn-brand btn-lg" id="rzpButton" type="button"><i class="bi bi-shield-lock me-2"></i>Pay ₹{{ order.total_amount|floatformat:2 }} securely</button>
+          </div>
+          <p class="small text-muted-2 mt-3 mb-0">Payments are processed by Razorpay. FOODIES never stores your card details.</p>
+        {% endif %}
+
+        <hr class="my-4">
+        <div class="d-flex gap-2">
+          <a class="btn btn-light flex-grow-1" href="{% url 'orders:detail' order.order_number %}">View order</a>
+          <form method="post" action="{% url 'orders:cancel' order.order_number %}" class="flex-grow-1"
+                data-confirm="Cancel this order and skip payment?" data-confirm-title="Cancel order">
+            {% csrf_token %}
+            <input type="hidden" name="reason" value="Cancelled at payment step">
+            <button class="btn btn-outline-danger w-100" type="submit">Cancel order</button>
+          </form>
+        </div>
+      </div>
+    </div>
+  </div>
+</main>
+
+{% if not mock_mode %}
+<script src="https://checkout.razorpay.com/v1/checkout.js"></script>
+<script>
+  const rzpOptions = {
+    key: "{{ razorpay_key_id }}",
+    amount: "{{ order.total_amount }}",
+    currency: "INR",
+    name: "FOODIES",
+    description: "Order #{{ order.order_number }}",
+    order_id: "{{ razorpay_data.razorpay_order_id|default:'' }}",
+    prefill: {
+      name: "{{ order.customer_name|escapejs }}",
+      contact: "{{ order.customer_phone|escapejs }}",
+      email: "{{ order.customer.email|escapejs }}"
+    },
+    theme: { color: "#ff4d2d" },
+    handler: function (response) {
+      const form = document.createElement("form");
+      form.method = "POST";
+      form.action = "{% url 'payments:razorpay_callback' order.order_number %}";
+      const token = document.querySelector("[name=csrfmiddlewaretoken]").value;
+      form.innerHTML = `
+        <input name="csrfmiddlewaretoken" value="${token}">
+        <input name="razorpay_payment_id" value="${response.razorpay_payment_id}">
+        <input name="razorpay_order_id" value="${response.razorpay_order_id}">
+        <input name="razorpay_signature" value="${response.razorpay_signature}">`;
+      document.body.appendChild(form);
+      form.submit();
+    }
+  };
+  const rzpButton = document.getElementById("rzpButton");
+  if (rzpButton && window.Razorpay) {
+    const rzp = new Razorpay(rzpOptions);
+    rzpButton.addEventListener("click", () => rzp.open());
+  } else if (rzpButton) {
+    rzpButton.addEventListener("click", () => window.foodiesToast("Payment gateway could not be loaded. Check your connection.", "error"));
+  }
+</script>
+{% endif %}
+{% include "partials/footer.html" %}
+{% endblock %}

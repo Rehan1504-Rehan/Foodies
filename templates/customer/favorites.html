@@ -1,0 +1,34 @@
+{% extends "partials/base.html" %}
+{% load static foodies_extras %}
+{% block title %}My favorites — FOODIES{% endblock %}
+
+{% block body %}
+{% include "partials/customer_nav.html" %}
+<main class="container py-4">
+  <h1 class="h3 mb-1">My favorites</h1>
+  <p class="text-muted-2">Saved restaurants and dishes, ready to reorder anytime.</p>
+
+  <section class="mb-5">
+    <h2 class="h5 mb-3">Favorite restaurants</h2>
+    <div class="row g-4">
+      {% for restaurant in restaurants %}
+        <div class="col-md-6 col-lg-3">{% include "partials/restaurant_card.html" %}</div>
+      {% empty %}
+        <div class="col-12">{% include "partials/empty.html" with icon="❤️" title="No favourite restaurants yet" message="Tap the heart on any restaurant to save it here." action_url="/restaurants/" action_label="Browse restaurants" %}</div>
+      {% endfor %}
+    </div>
+  </section>
+
+  {% if foods %}
+  <section>
+    <h2 class="h5 mb-3">Favorite dishes</h2>
+    <div class="fd-card fd-card-body">
+      {% for food in foods %}
+        {% include "partials/food_row.html" with food=food show_restaurant=True %}
+      {% endfor %}
+    </div>
+  </section>
+  {% endif %}
+</main>
+{% include "partials/footer.html" %}
+{% endblock %}

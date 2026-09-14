@@ -1,0 +1,80 @@
+{% extends "partials/base.html" %}
+{% load static foodies_extras %}
+{% block title %}My profile — FOODIES{% endblock %}
+
+{% block body %}
+{% include "partials/customer_nav.html" %}
+<main class="container py-4">
+  <h1 class="h3 mb-4">My profile</h1>
+  <div class="row g-4">
+    <div class="col-lg-4">
+      <section class="fd-card fd-card-body text-center">
+        {% if user.profile_image %}
+          <img src="{{ user.profile_image.url }}" class="fd-avatar fd-avatar-lg mx-auto mb-3" alt="{{ user.full_name }}">
+        {% else %}
+          <span class="fd-avatar fd-avatar-lg mx-auto mb-3">{{ user.initials }}</span>
+        {% endif %}
+        <h2 class="h5 mb-1">{{ user.full_name }}</h2>
+        <p class="text-muted-2 small mb-2">{{ user.email }}</p>
+        <span class="fd-badge fd-badge-soft">{{ user.get_role_display }}</span>
+        <div class="fd-divider"></div>
+        <div class="row text-center">
+          <div class="col-4 fd-mini-stat"><strong>{{ user.orders.count }}</strong><span>Orders</span></div>
+          <div class="col-4 fd-mini-stat"><strong>{{ user.reviews.count }}</strong><span>Reviews</span></div>
+          <div class="col-4 fd-mini-stat"><strong>{{ user.addresses.count }}</strong><span>Addresses</span></div>
+        </div>
+        <div class="fd-divider"></div>
+        <div class="d-grid gap-2 text-start small">
+          <a href="{% url 'dashboard:customer_home' %}" class="fd-side-link" style="color:var(--fd-ink)"><i class="bi bi-speedometer2"></i>Dashboard</a>
+          <a href="{% url 'orders:list' %}" class="fd-side-link" style="color:var(--fd-ink)"><i class="bi bi-bag-check"></i>My orders</a>
+          <a href="{% url 'accounts:addresses' %}" class="fd-side-link" style="color:var(--fd-ink)"><i class="bi bi-geo-alt"></i>Addresses</a>
+          <a href="{% url 'restaurants:favorites' %}" class="fd-side-link" style="color:var(--fd-ink)"><i class="bi bi-heart"></i>Favorites</a>
+          <a href="{% url 'reviews:mine' %}" class="fd-side-link" style="color:var(--fd-ink)"><i class="bi bi-star"></i>My reviews</a>
+          <a href="{% url 'payments:history' %}" class="fd-side-link" style="color:var(--fd-ink)"><i class="bi bi-credit-card"></i>Payments</a>
+          <a href="{% url 'accounts:notifications' %}" class="fd-side-link" style="color:var(--fd-ink)"><i class="bi bi-bell"></i>Notifications</a>
+        </div>
+      </section>
+    </div>
+
+    <div class="col-lg-8">
+      <section class="fd-card fd-card-body mb-4">
+        <h2 class="h6 fw-bold mb-3">Profile details</h2>
+        <form method="post" enctype="multipart/form-data">
+          {% csrf_token %}
+          <div class="row g-3">
+            <div class="col-md-6"><label class="form-label">First name</label>{{ form.first_name }}</div>
+            <div class="col-md-6"><label class="form-label">Last name</label>{{ form.last_name }}</div>
+            <div class="col-md-6"><label class="form-label">Email</label><input class="form-control" value="{{ user.email }}" disabled></div>
+            <div class="col-md-6"><label class="form-label">Phone</label>{{ form.phone }}</div>
+            <div class="col-12">
+              <label class="form-label">Profile picture</label>
+              {{ form.profile_image }}
+              <div class="form-text">JPG, PNG or WEBP up to 4 MB.</div>
+            </div>
+          </div>
+          {% for field in form %}{% for error in field.errors %}<div class="text-danger small mt-2">{{ field.label }}: {{ error }}</div>{% endfor %}{% endfor %}
+          <button class="btn btn-brand mt-3" type="submit" name="update_profile" value="1"><i class="bi bi-check2 me-1"></i>Save changes</button>
+        </form>
+      </section>
+
+      <section class="fd-card fd-card-body">
+        <h2 class="h6 fw-bold mb-3">Change password</h2>
+        <form method="post">
+          {% csrf_token %}
+          <div class="row g-3">
+            {% for field in password_form %}
+              <div class="col-md-4">
+                <label class="form-label" for="{{ field.id_for_label }}">{{ field.label }}</label>
+                <input type="password" class="form-control" name="{{ field.html_name }}" id="{{ field.id_for_label }}" required>
+                {% for error in field.errors %}<div class="text-danger small">{{ error }}</div>{% endfor %}
+              </div>
+            {% endfor %}
+          </div>
+          <button class="btn btn-outline-brand mt-3" type="submit" name="change_password" value="1"><i class="bi bi-shield-lock me-1"></i>Update password</button>
+        </form>
+      </section>
+    </div>
+  </div>
+</main>
+{% include "partials/footer.html" %}
+{% endblock %}

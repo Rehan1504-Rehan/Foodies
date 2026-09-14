@@ -1,0 +1,133 @@
+{% extends "partials/base.html" %}
+{% load static foodies_extras %}
+{% block title %}Your cart — FOODIES{% endblock %}
+
+{% block body %}
+{% include "partials/customer_nav.html" %}
+<main class="container py-4">
+  <h1 class="h3 mb-4">Your cart</h1>
+
+  {% if cart.is_empty %}
+    {% include "partials/empty.html" with icon="🛒" title="Your cart is empty" message="Add a few dishes from your favourite kitchen and they will show up here." action_url="/restaurants/" action_label="Browse restaurants" %}
+  {% else %}
+  <div class="row g-4">
+    <div class="col-lg-8">
+      {% if cart.restaurant %}
+        <div class="fd-card fd-card-body mb-3 d-flex align-items-center gap-3">
+          {% if cart.restaurant.logo %}
+            <img src="{{ cart.restaurant.logo.url }}" class="fd-avatar" alt="{{ cart.restaurant.name }}">
+          {% else %}
+            <span class="fd-avatar">{{ cart.restaurant.name|slice:":1" }}</span>
+          {% endif %}
+          <div class="flex-grow-1">
+            <div class="fw-bold">{{ cart.restaurant.name }}</div>
+            <div class="small text-muted-2">Each FOODIES cart belongs to one kitchen — ordering from {{ cart.restaurant.name }}.</div>
+          </div>
+          <a class="btn btn-sm btn-soft" href="{% url 'restaurants:detail' cart.restaurant.slug %}">Add more items</a>
+        </div>
+      {% endif %}
+
+      <div class="fd-card fd-card-body mb-3">
+        {% for item in cart.items %}
+          <div class="fd-food-card" data-cart-row="{{ item.food_item.pk }}">
+            <div class="fd-food-body">
+              <div class="d-flex align-items-center gap-2 mb-1">
+                <span class="fd-veg-dot {% if not item.food_item.is_veg %}nonveg{% endif %}"></span>
+                {% if not item.food_item.is_available %}<span class="fd-badge fd-badge-cancelled">Unavailable</span>{% endif %}
+              </div>
+              <h2 class="h6 fw-bold mb-1">{{ item.food_item.name }}</h2>
+              <div class="small text-muted-2">{{ item.food_item.category.name }} • ₹{{ item.unit_price|floatformat:2 }} each</div>
+              {% if item.savings %}<div class="small text-success fw-semibold">You save ₹{{ item.savings|floatformat:2 }}</div>{% endif %}
+              <div class="fw-bold mt-2">₹<span data-line-total="{{ item.food_item.pk }}">{{ item.line_total|floatformat:2 }}</span></div>
+            </div>
+            <div class="d-flex flex-column align-items-center gap-2">
+              {% if item.food_item.image %}
+                <img src="{{ item.food_item.image.url }}" class="fd-food-thumb" alt="{{ item.food_item.name }}">
+              {% else %}
+                <img src="{% static 'images/placeholder-food.jpg' %}" class="fd-food-thumb" alt="">
+              {% endif %}
+              <div class="fd-qty" data-qty-wrap="{{ item.food_item.pk }}">
+                <button type="button" data-cart-qty="decrease" data-food-id="{{ item.food_item.pk }}" aria-label="Decrease">−</button>
+                <span data-qty-value="{{ item.food_item.pk }}">{{ item.quantity }}</span>
+                <button type="button" data-cart-qty="increase" data-food-id="{{ item.food_item.pk }}" aria-label="Increase">+</button>
+              </div>
+              <form method="post" action="{% url 'cart:remove' item.food_item.pk %}" data-confirm="Remove {{ item.food_item.name }} from your cart?" data-confirm-title="Remove item">
+                {% csrf_token %}
+                <button class="btn btn-link btn-sm text-danger p-0" type="submit"><i class="bi bi-trash3 me-1"></i>Remove</button>
+              </form>
+            </div>
+          </div>
+        {% endfor %}
+      </div>
+
+      <div class="fd-card fd-card-body d-flex flex-wrap justify-content-between gap-2 align-items-center">
+        <a class="btn btn-light" href="{% url 'restaurants:list' %}"><i class="bi bi-arrow-left me-1"></i>Continue shopping</a>
+        <form method="post" action="{% url 'cart:clear' %}" data-confirm="This will empty your entire cart. Continue?" data-confirm-title="Clear cart">
+          {% csrf_token %}
+          <button class="btn btn-outline-danger" type="submit"><i class="bi bi-x-circle me-1"></i>Clear cart</button>
+        </form>
+      </div>
+    </div>
+
+    <div class="col-lg-4">
+      <div class="fd-sticky-summary">
+        <div class="fd-card fd-card-body mb-3">
+          <h2 class="h6 fw-bold mb-3">Apply coupon</h2>
+          <form method="post" action="{% url 'cart:apply_coupon' %}" class="d-flex gap-2">
+            {% csrf_token %}
+            <input class="form-control text-uppercase" name="code" placeholder="Enter code" value="{{ pricing.coupon_code }}" aria-label="Coupon code">
+            <button class="btn btn-brand" type="submit">Apply</button>
+          </form>
+          {% if pricing.coupon_applied %}
+            <div class="d-flex justify-content-between align-items-center bg-soft rounded-3 p-2 mt-3">
+              <span class="small fw-semibold"><i class="bi bi-check-circle-fill text-success me-1"></i>{{ pricing.coupon_code }} applied</span>
+              <form method="post" action="{% url 'cart:remove_coupon' %}">
+                {% csrf_token %}
+                <button class="btn btn-sm btn-link text-danger p-0" type="submit">Remove</button>
+              </form>
+            </div>
+          {% endif %}
+          {% if active_coupons %}
+            <div class="mt-3 small text-muted-2">Best offers for this order:</div>
+            <div class="d-flex flex-wrap gap-2 mt-2">
+              {% for coupon in active_coupons %}
+                <button type="button" class="fd-chip" data-copy="{{ coupon.code }}" title="{{ coupon.description }}">
+                  <i class="bi bi-ticket-perforated"></i>{{ coupon.code }} • {{ coupon.display_value }}
+                </button>
+              {% endfor %}
+            </div>
+          {% endif %}
+        </div>
+
+        <div class="fd-card fd-card-body">
+          <h2 class="h6 fw-bold mb-3">Bill details</h2>
+          <div class="fd-bill-row"><span>Item total (MRP)</span><span data-price="mrp_total">₹{{ pricing.mrp_total|floatformat:2 }}</span></div>
+          {% if pricing.food_discount %}
+            <div class="fd-bill-row discount"><span>Item discount</span><span>− ₹{{ pricing.food_discount|floatformat:2 }}</span></div>
+          {% endif %}
+          <div class="fd-bill-row"><span>Subtotal</span><span data-price="subtotal">₹{{ pricing.subtotal|floatformat:2 }}</span></div>
+          {% if pricing.coupon_discount %}
+            <div class="fd-bill-row discount"><span>Coupon ({{ pricing.coupon_code }})</span><span data-price="coupon_discount">− ₹{{ pricing.coupon_discount|floatformat:2 }}</span></div>
+          {% endif %}
+          <div class="fd-bill-row"><span>Delivery fee</span><span data-price="delivery_fee">{% if pricing.delivery_fee %}₹{{ pricing.delivery_fee|floatformat:2 }}{% else %}<span class="text-success fw-semibold">FREE</span>{% endif %}</span></div>
+          <div class="fd-bill-row"><span>Taxes &amp; charges ({{ pricing.tax_percent }}% GST)</span><span data-price="tax">₹{{ pricing.tax|floatformat:2 }}</span></div>
+          <div class="fd-bill-row"><span>Platform fee</span><span data-price="platform_fee">₹{{ pricing.platform_fee|floatformat:2 }}</span></div>
+          <div class="fd-bill-row total"><span>To pay</span><span data-price="total">₹{{ pricing.total|floatformat:2 }}</span></div>
+
+          {% if pricing.total_savings %}
+            <div class="alert alert-success small mt-3 mb-0 rounded-3"><i class="bi bi-piggy-bank me-1"></i>You are saving ₹{{ pricing.total_savings|floatformat:2 }} on this order.</div>
+          {% endif %}
+          {% if pricing.free_delivery_gap %}
+            <div class="alert alert-warning small mt-3 mb-0 rounded-3"><i class="bi bi-scooter me-1"></i>Add ₹{{ pricing.free_delivery_gap|floatformat:2 }} more for free delivery.</div>
+          {% endif %}
+
+          <a class="btn btn-brand btn-lg w-100 mt-3" href="{% url 'payments:checkout' %}">Proceed to checkout <i class="bi bi-arrow-right ms-1"></i></a>
+          <p class="small text-muted-2 text-center mt-2 mb-0"><i class="bi bi-shield-lock me-1"></i>Totals are calculated on FOODIES servers.</p>
+        </div>
+      </div>
+    </div>
+  </div>
+  {% endif %}
+</main>
+{% include "partials/footer.html" %}
+{% endblock %}

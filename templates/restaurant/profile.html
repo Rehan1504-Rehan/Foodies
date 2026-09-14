@@ -1,0 +1,66 @@
+{% extends "restaurant/base.html" %}
+{% load foodies_extras %}
+{% block title %}My profile — FOODIES Restaurant Console{% endblock %}
+{% block page_heading %}My profile{% endblock %}
+
+{% block content %}
+<div class="row g-3">
+  <div class="col-lg-4">
+    <div class="fd-card fd-card-body text-center">
+      {% if user.profile_image %}
+        <img src="{{ user.profile_image.url }}" class="fd-avatar fd-avatar-lg mx-auto mb-3" alt="">
+      {% else %}
+        <span class="fd-avatar fd-avatar-lg mx-auto mb-3">{{ user.initials }}</span>
+      {% endif %}
+      <h2 class="h5 mb-1">{{ user.full_name }}</h2>
+      <div class="small text-muted-2">{{ user.email }}</div>
+      <div class="small text-muted-2">{{ user.phone }}</div>
+      <span class="fd-badge fd-badge-soft mt-2">Restaurant owner</span>
+      <div class="fd-divider"></div>
+      <div class="row text-center">
+        <div class="col-6 fd-mini-stat"><strong>{{ user.restaurants.count }}</strong><span>Restaurants</span></div>
+        <div class="col-6 fd-mini-stat"><strong>{{ user.date_joined|date:"d M Y" }}</strong><span>Joined</span></div>
+      </div>
+      <div class="d-grid gap-2 mt-3">
+        <a class="btn btn-soft" href="{% url 'dashboard:restaurant_profile' %}"><i class="bi bi-shop me-1"></i>Restaurant profile</a>
+        <a class="btn btn-soft" href="{% url 'dashboard:restaurant_profile_settings' %}"><i class="bi bi-gear me-1"></i>Account settings</a>
+        <a class="btn btn-soft" href="{% url 'accounts:notifications' %}"><i class="bi bi-bell me-1"></i>Notifications</a>
+      </div>
+    </div>
+  </div>
+
+  <div class="col-lg-8">
+    <div class="fd-card fd-card-body mb-3">
+      <h2 class="h6 fw-bold mb-3">Profile details</h2>
+      <form method="post" enctype="multipart/form-data">
+        {% csrf_token %}
+        <div class="row g-3">
+          <div class="col-md-6"><label class="form-label">First name</label>{{ form.first_name }}</div>
+          <div class="col-md-6"><label class="form-label">Last name</label>{{ form.last_name }}</div>
+          <div class="col-md-6"><label class="form-label">Email</label><input class="form-control" value="{{ user.email }}" disabled></div>
+          <div class="col-md-6"><label class="form-label">Phone</label>{{ form.phone }}</div>
+          <div class="col-12"><label class="form-label">Profile picture</label>{{ form.profile_image }}</div>
+        </div>
+        <button class="btn btn-brand mt-3" type="submit" name="update_profile" value="1">Save changes</button>
+      </form>
+    </div>
+
+    <div class="fd-card fd-card-body">
+      <h2 class="h6 fw-bold mb-3">Change password</h2>
+      <form method="post">
+        {% csrf_token %}
+        <div class="row g-3">
+          {% for field in password_form %}
+            <div class="col-md-4">
+              <label class="form-label" for="{{ field.id_for_label }}">{{ field.label }}</label>
+              <input type="password" class="form-control" name="{{ field.html_name }}" id="{{ field.id_for_label }}" required>
+              {% for error in field.errors %}<div class="text-danger small">{{ error }}</div>{% endfor %}
+            </div>
+          {% endfor %}
+        </div>
+        <button class="btn btn-outline-brand mt-3" type="submit" name="change_password" value="1">Update password</button>
+      </form>
+    </div>
+  </div>
+</div>
+{% endblock %}

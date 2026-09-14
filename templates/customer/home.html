@@ -1,0 +1,253 @@
+{% extends "partials/base.html" %}
+{% load static foodies_extras %}
+{% block title %}{{ SITE_NAME }} — Order food online | Good Food. Great Mood.{% endblock %}
+
+{% block body %}
+{% include "partials/customer_nav.html" %}
+
+<main class="container py-4">
+  <!-- Hero + location + search -->
+  <section class="fd-hero mb-4">
+    <div class="fd-hero-media" style="background-image:url('{% static 'images/hero-food.jpg' %}')"></div>
+    <div class="fd-hero-content row align-items-center g-4">
+      <div class="col-lg-7">
+        <span class="fd-pill mb-3"><i class="bi bi-lightning-charge-fill"></i> Delivery in 30 minutes or less</span>
+        <h1 class="mb-3">Good Food.<br>Great Mood.</h1>
+        <p class="mb-4 text-white-50" style="max-width:520px">
+          Discover {{ total_restaurants }} hand-picked kitchens and {{ total_dishes }} dishes near you — from street-style chaat to
+          slow-cooked biryani, delivered hot and fresh.
+        </p>
+
+        <form class="row g-2" action="{% url 'core:search' %}" method="get">
+          <div class="col-sm-4">
+            <select class="form-select form-select-lg border-0" name="city" aria-label="Select your city">
+              <option value="">All cities</option>
+              {% for city in cities %}<option value="{{ city }}" {% if request.GET.city == city %}selected{% endif %}>{{ city }}</option>{% endfor %}
+            </select>
+          </div>
+          <div class="col-sm-8">
+            <div class="input-group input-group-lg">
+              <span class="input-group-text bg-white border-0"><i class="bi bi-search text-muted-2"></i></span>
+              <input type="search" class="form-control border-0" name="q" placeholder="Search for biryani, pizza, thali or a restaurant" aria-label="Search food">
+              <button class="btn btn-brand px-4" type="submit">Find food</button>
+            </div>
+          </div>
+        </form>
+
+        <div class="fd-stat-strip mt-4">
+          <div><strong>{{ total_restaurants }}</strong><span class="small text-white-50">Partner kitchens</span></div>
+          <div><strong>{{ total_dishes }}+</strong><span class="small text-white-50">Dishes to explore</span></div>
+          <div><strong>{{ total_customers }}</strong><span class="small text-white-50">Happy foodies</span></div>
+        </div>
+      </div>
+      <div class="col-lg-5 d-none d-lg-block text-end">
+        <div class="fd-card p-3 d-inline-block text-start" style="max-width:280px">
+          <div class="small-caps text-muted-2 mb-2">Trending right now</div>
+          {% for food in popular_food|slice:":3" %}
+            <div class="fd-list-row">
+              {% if food.image %}<img src="{{ food.image.url }}" class="fd-avatar" alt="{{ food.name }}">{% else %}<span class="fd-avatar">🍲</span>{% endif %}
+              <div class="flex-grow-1">
+                <div class="fw-bold small">{{ food.name|truncatechars:24 }}</div>
+                <div class="text-muted-2" style="font-size:.75rem">{{ food.restaurant.name|truncatechars:22 }}</div>
+              </div>
+              <span class="fd-price small">{{ food.final_price|inr:0 }}</span>
+            </div>
+          {% empty %}
+            <p class="small text-muted-2 mb-0">Popular dishes will appear here as orders come in.</p>
+          {% endfor %}
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Service highlights -->
+  <section class="row g-3 mb-5">
+    <div class="col-6 col-lg-3">
+      <div class="fd-card fd-card-body h-100 d-flex align-items-center gap-3">
+        <span class="fd-stat-icon mb-0" style="width:44px;height:44px;border-radius:13px;display:grid;place-items:center;background:var(--fd-primary-soft);color:var(--fd-primary);font-size:1.2rem"><i class="bi bi-scooter"></i></span>
+        <div><div class="fw-bold small">Lightning delivery</div><div class="text-muted-2" style="font-size:.75rem">Live order tracking</div></div>
+      </div>
+    </div>
+    <div class="col-6 col-lg-3">
+      <div class="fd-card fd-card-body h-100 d-flex align-items-center gap-3">
+        <span style="width:44px;height:44px;border-radius:13px;display:grid;place-items:center;background:var(--fd-secondary-soft);color:var(--fd-secondary);font-size:1.2rem"><i class="bi bi-piggy-bank"></i></span>
+        <div><div class="fw-bold small">Best price promise</div><div class="text-muted-2" style="font-size:.75rem">Coupons on every order</div></div>
+      </div>
+    </div>
+    <div class="col-6 col-lg-3">
+      <div class="fd-card fd-card-body h-100 d-flex align-items-center gap-3">
+        <span style="width:44px;height:44px;border-radius:13px;display:grid;place-items:center;background:var(--fd-accent-soft);color:#b45309;font-size:1.2rem"><i class="bi bi-shield-check"></i></span>
+        <div><div class="fw-bold small">Hygiene rated</div><div class="text-muted-2" style="font-size:.75rem">Verified kitchens only</div></div>
+      </div>
+    </div>
+    <div class="col-6 col-lg-3">
+      <div class="fd-card fd-card-body h-100 d-flex align-items-center gap-3">
+        <span style="width:44px;height:44px;border-radius:13px;display:grid;place-items:center;background:#f3e8ff;color:#7e22ce;font-size:1.2rem"><i class="bi bi-headset"></i></span>
+        <div><div class="fw-bold small">24×7 support</div><div class="text-muted-2" style="font-size:.75rem">We are always around</div></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Categories -->
+  <section class="mb-5">
+    <div class="d-flex justify-content-between align-items-end mb-3">
+      <div>
+        <h2 class="h4 mb-1">What's on your mind?</h2>
+        <p class="text-muted-2 small mb-0">Pick a craving and we will show you the best kitchens for it.</p>
+      </div>
+      <a href="{% url 'menu:list' %}" class="btn btn-sm btn-soft">All categories</a>
+    </div>
+    <div class="row g-3">
+      {% for category in categories %}
+        <div class="col-4 col-md-3 col-lg-2">
+          <a href="{% url 'menu:category' category.slug %}" class="fd-category-tile">
+            <span class="fd-category-icon">
+              {% if category.image %}<img src="{{ category.image.url }}" alt="{{ category.name }}">{% else %}{{ category.emoji }}{% endif %}
+            </span>
+            <span class="fw-bold small">{{ category.name }}</span>
+            <span class="text-muted-2" style="font-size:.72rem">{{ category.item_count }} items</span>
+          </a>
+        </div>
+      {% empty %}
+        <div class="col-12">{% include "partials/empty.html" with icon="🥘" title="No categories yet" message="Categories added by the FOODIES team will appear here." %}</div>
+      {% endfor %}
+    </div>
+  </section>
+
+  <!-- Special offers -->
+  {% if offers %}
+  <section class="mb-5">
+    <div class="d-flex justify-content-between align-items-end mb-3">
+      <div>
+        <h2 class="h4 mb-1">Special offers 🔥</h2>
+        <p class="text-muted-2 small mb-0">Apply these codes in your cart and watch the total drop.</p>
+      </div>
+      <a href="{% url 'core:offers' %}" class="btn btn-sm btn-soft">All offers</a>
+    </div>
+    <div class="row g-3">
+      {% for coupon in offers %}
+        <div class="col-md-6 col-lg-4">
+          <div class="fd-offer-card {% cycle '' 'alt' 'alt2' %}">
+            <div class="d-flex justify-content-between align-items-start">
+              <div>
+                <div class="small-caps text-white-50">{{ coupon.get_discount_type_display }}</div>
+                <h4 class="fw-bold mb-1">{{ coupon.display_value }}</h4>
+                <p class="small text-white-50 mb-2">{{ coupon.description|default:coupon.title|default:"Save more on your next FOODIES order." }}</p>
+              </div>
+              <i class="bi bi-ticket-perforated fs-2 opacity-50"></i>
+            </div>
+            <div class="d-flex align-items-center justify-content-between gap-2 flex-wrap">
+              <button class="fd-code-chip" data-copy="{{ coupon.code }}"><i class="bi bi-clipboard"></i>{{ coupon.code }}</button>
+              <span class="small text-white-50">Min order {{ coupon.minimum_order|inr:0 }} • Valid till {{ coupon.valid_until|date:"d M" }}</span>
+            </div>
+          </div>
+        </div>
+      {% endfor %}
+    </div>
+  </section>
+  {% endif %}
+
+  <!-- Popular restaurants -->
+  <section class="mb-5">
+    <div class="d-flex justify-content-between align-items-end mb-3">
+      <div>
+        <h2 class="h4 mb-1">Popular restaurants near you</h2>
+        <p class="text-muted-2 small mb-0">Most ordered from this week.</p>
+      </div>
+      <a href="{% url 'restaurants:list' %}" class="btn btn-sm btn-soft">See all</a>
+    </div>
+    <div class="row g-4">
+      {% for restaurant in popular_restaurants %}
+        <div class="col-md-6 col-lg-3">{% include "partials/restaurant_card.html" %}</div>
+      {% empty %}
+        <div class="col-12">{% include "partials/empty.html" with icon="🏪" title="No restaurants yet" message="Approved restaurants will show up here." action_url="/accounts/register/restaurant/" action_label="Register a restaurant" %}</div>
+      {% endfor %}
+    </div>
+  </section>
+
+  <!-- Popular food -->
+  <section class="mb-5">
+    <div class="d-flex justify-content-between align-items-end mb-3">
+      <div>
+        <h2 class="h4 mb-1">Popular dishes</h2>
+        <p class="text-muted-2 small mb-0">Ordered again and again by FOODIES customers.</p>
+      </div>
+      <a href="{% url 'core:search' %}" class="btn btn-sm btn-soft">Explore menu</a>
+    </div>
+    <div class="row g-3">
+      {% for food in popular_food %}
+        <div class="col-6 col-md-4 col-lg-3">
+          <div class="fd-card fd-card-hover h-100 overflow-hidden">
+            <div class="fd-restaurant-media" style="aspect-ratio:4/3">
+              {% if food.image %}<img src="{{ food.image.url }}" alt="{{ food.name }}" loading="lazy">{% else %}<img src="{% static 'images/placeholder-food.jpg' %}" alt="{{ food.name }}" loading="lazy">{% endif %}
+              <span class="fd-rating-chip"><span class="fd-veg-dot {% if not food.is_veg %}nonveg{% endif %}"></span></span>
+              {% if food.has_discount %}<div class="fd-offer-ribbon">{{ food.discount_percent }}% OFF</div>{% endif %}
+            </div>
+            <div class="fd-card-body">
+              <h6 class="fw-bold mb-1 text-truncate">{{ food.name }}</h6>
+              <div class="text-muted-2 small mb-2 text-truncate"><i class="bi bi-shop me-1"></i>{{ food.restaurant.name }}</div>
+              <div class="d-flex justify-content-between align-items-center">
+                <span class="fd-price">{{ food.final_price|inr }}</span>
+                <button class="btn btn-sm btn-brand" data-add-to-cart="{% url 'cart:add' food.pk %}" data-food-id="{{ food.pk }}" data-requires-auth="{% if user.is_authenticated %}0{% else %}1{% endif %}">Add</button>
+              </div>
+            </div>
+          </div>
+        </div>
+      {% empty %}
+        <div class="col-12">{% include "partials/empty.html" with icon="🍜" title="No dishes yet" message="Dishes added by restaurants will appear here." %}</div>
+      {% endfor %}
+    </div>
+  </section>
+
+  <!-- Top rated + recommended -->
+  <section class="row g-4 mb-5">
+    <div class="col-lg-6">
+      <div class="fd-card p-4 h-100">
+        <h3 class="h5 mb-3"><i class="bi bi-star-fill text-warning me-2"></i>Top rated kitchens</h3>
+        {% for restaurant in top_rated %}
+          <div class="fd-list-row">
+            {% if restaurant.logo %}<img src="{{ restaurant.logo.url }}" class="fd-avatar" alt="{{ restaurant.name }}">{% else %}<span class="fd-avatar">{{ restaurant.name|slice:":1" }}</span>{% endif %}
+            <div class="flex-grow-1 min-w-0">
+              <a href="{% url 'restaurants:detail' restaurant.slug %}" class="fw-bold small d-block text-truncate">{{ restaurant.name }}</a>
+              <span class="text-muted-2" style="font-size:.75rem">{{ restaurant.primary_cuisine }} • {{ restaurant.delivery_time }} min</span>
+            </div>
+            <span class="fd-badge fd-badge-delivered"><i class="bi bi-star-fill"></i> {{ restaurant.rating }}</span>
+          </div>
+        {% empty %}
+          <p class="text-muted-2 small mb-0">Ratings appear once customers review their delivered orders.</p>
+        {% endfor %}
+      </div>
+    </div>
+    <div class="col-lg-6">
+      <div class="fd-card p-4 h-100">
+        <h3 class="h5 mb-3"><i class="bi bi-hand-thumbs-up-fill text-primary-brand me-2"></i>Recommended for you</h3>
+        {% for restaurant in recommended %}
+          <div class="fd-list-row">
+            <div class="flex-grow-1 min-w-0">
+              <a href="{% url 'restaurants:detail' restaurant.slug %}" class="fw-bold small d-block text-truncate">{{ restaurant.name }}</a>
+              <span class="text-muted-2" style="font-size:.75rem">{{ restaurant.cuisine_type|truncatechars:40 }}</span>
+            </div>
+            <a class="btn btn-sm btn-soft" href="{% url 'restaurants:detail' restaurant.slug %}">Order</a>
+          </div>
+        {% empty %}
+          <p class="text-muted-2 small mb-0">Recommendations unlock as you order more often.</p>
+        {% endfor %}
+      </div>
+    </div>
+  </section>
+
+  <!-- Newly joined -->
+  {% if new_restaurants %}
+  <section class="mb-4">
+    <h2 class="h4 mb-3">Newly joined on FOODIES ✨</h2>
+    <div class="fd-scroll-x">
+      {% for restaurant in new_restaurants %}
+        <div style="min-width:280px">{% include "partials/restaurant_card.html" %}</div>
+      {% endfor %}
+    </div>
+  </section>
+  {% endif %}
+</main>
+
+{% include "partials/footer.html" %}
+{% endblock %}

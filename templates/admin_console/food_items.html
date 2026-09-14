@@ -1,0 +1,79 @@
+{% extends "admin_console/base.html" %}
+{% load static foodies_extras %}
+{% block title %}Food items — FOODIES Admin{% endblock %}
+{% block page_heading %}Food item management{% endblock %}
+
+{% block content %}
+<div class="fd-card fd-card-body mb-3">
+  <form class="row g-2 align-items-end" method="get">
+    <div class="col-md-4">
+      <label class="form-label small" for="q">Search dishes</label>
+      <input class="form-control" id="q" type="search" name="q" value="{{ q }}" placeholder="Dish or restaurant name">
+    </div>
+    <div class="col-md-4">
+      <label class="form-label small" for="restaurant">Restaurant</label>
+      <select class="form-select" id="restaurant" name="restaurant">
+        <option value="">All restaurants</option>
+        {% for restaurant in restaurants %}
+          <option value="{{ restaurant.pk }}" {% if restaurant_id == restaurant.pk|stringformat:"s" %}selected{% endif %}>{{ restaurant.name }}</option>
+        {% endfor %}
+      </select>
+    </div>
+    <div class="col-md-4 d-flex gap-2">
+      <button class="btn btn-brand flex-grow-1" type="submit">Filter</button>
+      <a class="btn btn-light" href="{% url 'dashboard:admin_food_items' %}">Reset</a>
+    </div>
+  </form>
+</div>
+
+<div class="fd-table-wrap">
+  <div class="fd-table-scroll">
+    <table class="fd-table">
+      <thead><tr><th>Dish</th><th>Restaurant</th><th>Category</th><th>Price</th><th>Type</th><th>Ordered</th><th>Status</th><th class="text-end">Actions</th></tr></thead>
+      <tbody>
+        {% for food in food_items %}
+          <tr>
+            <td>
+              <div class="d-flex align-items-center gap-2">
+                {% if food.image %}<img src="{{ food.image.url }}" class="fd-avatar rounded-3" style="width:38px;height:38px" alt="">{% else %}<span class="fd-avatar rounded-3" style="width:38px;height:38px">🍽️</span>{% endif %}
+                <div>
+                  <div class="fw-semibold">{{ food.name|truncatechars:26 }}</div>
+                  <div class="text-muted-2" style="font-size:.72rem">{{ food.preparation_time }} min prep</div>
+                </div>
+              </div>
+            </td>
+            <td class="small">{{ food.restaurant.name|truncatechars:20 }}</td>
+            <td><span class="fd-badge fd-badge-soft">{{ food.category.name }}</span></td>
+            <td>
+              <div class="fw-bold">{{ food.final_price|inr:0 }}</div>
+              {% if food.has_discount %}<div class="fd-price-del" style="font-size:.72rem">{{ food.price|inr:0 }}</div>{% endif %}
+            </td>
+            <td>
+              <span class="fd-veg-dot {% if not food.is_veg %}nonveg{% endif %}"></span>
+              <span class="small ms-1">{{ food.food_type }}</span>
+            </td>
+            <td class="fw-semibold">{{ food.order_count }}</td>
+            <td>{% if food.is_available %}<span class="fd-badge fd-badge-delivered">Available</span>{% else %}<span class="fd-badge fd-badge-cancelled">Sold out</span>{% endif %}</td>
+            <td class="text-end">
+              <div class="d-flex gap-1 justify-content-end">
+                <form method="post" action="{% url 'dashboard:admin_toggle_food' food.pk %}">
+                  {% csrf_token %}
+                  <input type="hidden" name="next" value="{% url 'dashboard:admin_food_items' %}">
+                  <button class="btn btn-sm btn-soft" type="submit">{% if food.is_available %}Disable{% else %}Enable{% endif %}</button>
+                </form>
+                <form method="post" action="{% url 'dashboard:admin_delete_food' food.pk %}" data-confirm="Permanently delete {{ food.name }}?" data-confirm-title="Delete dish">
+                  {% csrf_token %}
+                  <input type="hidden" name="next" value="{% url 'dashboard:admin_food_items' %}">
+                  <button class="btn btn-sm btn-outline-danger" type="submit"><i class="bi bi-trash3"></i></button>
+                </form>
+              </div>
+            </td>
+          </tr>
+        {% empty %}
+          <tr><td colspan="8" class="text-center text-muted-2 py-5">No dishes found.</td></tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+{% endblock %}

@@ -1,0 +1,81 @@
+{% extends "partials/base.html" %}
+{% load static foodies_extras %}
+{% block body_class %}fd-delivery{% endblock %}
+
+{% block body %}
+<div class="fd-shell">
+  <aside class="fd-sidebar">
+    <a class="fd-brand" href="{% url 'delivery:dashboard' %}">
+      <span class="fd-brand-mark" style="width:36px;height:36px;border-radius:11px;font-size:1.05rem">🛵</span>
+      <span class="fs-6">{{ SITE_NAME }}<small>Partner App</small></span>
+    </a>
+
+    {% if profile %}
+      <div class="mt-3 p-3 rounded-3" style="background:rgba(255,255,255,.07)">
+        <div class="fw-bold small">{{ user.full_name }}</div>
+        <div class="small" style="color:rgba(255,255,255,.6)">{{ profile.get_vehicle_type_display }} • {{ profile.vehicle_number|default:"No vehicle no." }}</div>
+        <div class="mt-2">
+          {% if profile.is_approved %}<span class="fd-badge fd-badge-delivered">Approved</span>{% else %}<span class="fd-badge fd-badge-placed">Pending approval</span>{% endif %}
+          {% if profile.is_online %}<span class="fd-badge fd-badge-open">Online</span>{% else %}<span class="fd-badge fd-badge-soft">Offline</span>{% endif %}
+        </div>
+      </div>
+    {% endif %}
+
+    <div class="fd-side-group">
+      <a class="fd-side-link {% if request.resolver_match.url_name == 'dashboard' %}active{% endif %}" href="{% url 'delivery:dashboard' %}"><i class="bi bi-speedometer2"></i>Dashboard</a>
+      <a class="fd-side-link {% if request.resolver_match.url_name == 'available' %}active{% endif %}" href="{% url 'delivery:available' %}"><i class="bi bi-inbox"></i>Available deliveries</a>
+      <a class="fd-side-link {% if request.resolver_match.url_name == 'earnings' %}active{% endif %}" href="{% url 'delivery:earnings' %}"><i class="bi bi-cash-coin"></i>Earnings</a>
+      <a class="fd-side-link {% if request.resolver_match.url_name == 'history' %}active{% endif %}" href="{% url 'delivery:history' %}"><i class="bi bi-clock-history"></i>History</a>
+      <a class="fd-side-link {% if request.resolver_match.url_name == 'profile' %}active{% endif %}" href="{% url 'delivery:profile' %}"><i class="bi bi-person-badge"></i>Profile</a>
+      <a class="fd-side-link" href="{% url 'accounts:notifications' %}">
+        <i class="bi bi-bell"></i>Notifications
+        {% if unread_notifications %}<span class="badge bg-danger">{{ unread_notifications }}</span>{% endif %}
+      </a>
+      <a class="fd-side-link" href="{% url 'core:home' %}"><i class="bi bi-box-arrow-up-right"></i>View website</a>
+      <form method="post" action="{% url 'accounts:logout' %}">
+        {% csrf_token %}
+        <button class="fd-side-link w-100 border-0 bg-transparent text-start" type="submit"><i class="bi bi-box-arrow-right"></i>Logout</button>
+      </form>
+    </div>
+  </aside>
+  <div class="fd-backdrop"></div>
+
+  <div class="fd-main">
+    <header class="fd-topbar">
+      <button class="btn btn-light btn-icon fd-sidebar-toggle" data-sidebar-toggle aria-label="Toggle menu"><i class="bi bi-list"></i></button>
+      <div class="flex-grow-1">
+        <div class="small-caps text-muted-2">Delivery Partner</div>
+        <div class="fw-bold">{% block page_heading %}Dashboard{% endblock %}</div>
+      </div>
+      {% if profile %}
+        <form method="post" action="{% url 'delivery:toggle_availability' %}">
+          {% csrf_token %}
+          <button class="btn btn-sm {% if profile.is_online %}btn-outline-danger{% else %}btn-brand{% endif %}" type="submit">
+            {% if profile.is_online %}<i class="bi bi-toggle-on me-1"></i>Go offline{% else %}<i class="bi bi-toggle-off me-1"></i>Go online{% endif %}
+          </button>
+        </form>
+      {% endif %}
+      <div class="dropdown">
+        <button class="btn btn-light dropdown-toggle d-flex align-items-center gap-2" data-bs-toggle="dropdown">
+          <span class="fd-avatar" style="width:30px;height:30px;font-size:.75rem">{{ user.initials }}</span>
+          <span class="d-none d-md-inline small fw-semibold">{{ user.short_name }}</span>
+        </button>
+        <ul class="dropdown-menu dropdown-menu-end border-0 shadow-card rounded-xl">
+          <li><a class="dropdown-item" href="{% url 'delivery:profile' %}"><i class="bi bi-person me-2"></i>My profile</a></li>
+          <li><a class="dropdown-item" href="{% url 'delivery:earnings' %}"><i class="bi bi-cash-coin me-2"></i>Earnings</a></li>
+          <li>
+            <form method="post" action="{% url 'accounts:logout' %}">
+              {% csrf_token %}
+              <button class="dropdown-item text-danger" type="submit"><i class="bi bi-box-arrow-right me-2"></i>Logout</button>
+            </form>
+          </li>
+        </ul>
+      </div>
+    </header>
+
+    <div class="fd-content">
+      {% block content %}{% endblock %}
+    </div>
+  </div>
+</div>
+{% endblock %}

@@ -1,0 +1,21 @@
+{% extends "partials/base.html" %}
+{% block title %}500 — Something went wrong | FOODIES{% endblock %}
+{% block body %}
+<nav class="navbar fd-navbar sticky-top py-2">
+  <div class="container">
+    <a class="fd-brand" href="/"><span class="fd-brand-mark">🍔</span><span>FOODIES<small>Good Food. Great Mood.</small></span></a>
+  </div>
+</nav>
+<main class="container py-5">
+  <div class="fd-card fd-card-body text-center" style="max-width:640px;margin:3rem auto">
+    <div class="fd-empty-icon mx-auto mb-3" style="width:110px;height:110px;font-size:3rem">🍳</div>
+    <h1 class="display-5 fw-black mb-2">500</h1>
+    <h2 class="h4 mb-3">Our kitchen dropped the pan</h2>
+    <p class="text-muted-2">Something went wrong on our side and the team has been notified. Nothing was charged for a failed request.</p>
+    <div class="d-flex gap-2 justify-content-center flex-wrap mt-4">
+      <a class="btn btn-brand" href="/">Back to home</a>
+      <a class="btn btn-soft" href="/healthz/">Check system status</a>
+    </div>
+  </div>
+</main>
+{% endblock %}

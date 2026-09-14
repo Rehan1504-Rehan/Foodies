@@ -1,0 +1,89 @@
+{% extends "partials/base.html" %}
+{% load static %}
+{% block title %}Login — FOODIES{% endblock %}
+{% block body_class %}{% endblock %}
+
+{% block body %}
+<div class="fd-auth-wrap">
+  <aside class="fd-auth-aside">
+    <a class="fd-brand text-white" href="{% url 'core:home' %}">
+      <span class="fd-brand-mark">🍔</span>
+      <span>{{ SITE_NAME }}<small class="text-white-50">Good Food. Great Mood.</small></span>
+    </a>
+    <div class="position-relative" style="z-index:2">
+      <h1 class="display-6 fw-bold">Welcome back, foodie.</h1>
+      <p class="text-white-50 mb-4" style="max-width:420px">
+        One login for every FOODIES role — order food, manage your kitchen, deliver orders or run the platform.
+      </p>
+      <div class="d-grid gap-2" style="max-width:420px">
+        <div class="d-flex align-items-center gap-3">
+          <span class="fd-brand-mark" style="background:rgba(255,255,255,.15);box-shadow:none">🍽️</span>
+          <div><div class="fw-bold">Customers</div><div class="small text-white-50">Track orders, save favourites, collect coupons</div></div>
+        </div>
+        <div class="d-flex align-items-center gap-3">
+          <span class="fd-brand-mark" style="background:rgba(255,255,255,.15);box-shadow:none">🏪</span>
+          <div><div class="fw-bold">Restaurant owners</div><div class="small text-white-50">Menu, orders and sales analytics</div></div>
+        </div>
+        <div class="d-flex align-items-center gap-3">
+          <span class="fd-brand-mark" style="background:rgba(255,255,255,.15);box-shadow:none">🛵</span>
+          <div><div class="fw-bold">Delivery partners</div><div class="small text-white-50">Assignments and per-delivery earnings</div></div>
+        </div>
+      </div>
+    </div>
+    <div class="small text-white-50 position-relative" style="z-index:2">© {% now "Y" %} FOODIES — built with Django, DRF &amp; PostgreSQL.</div>
+  </aside>
+
+  <main class="fd-auth-main">
+    <div class="fd-auth-card">
+      <a class="fd-brand d-lg-none mb-4" href="{% url 'core:home' %}">
+        <span class="fd-brand-mark">🍔</span>
+        <span>{{ SITE_NAME }}<small>Good Food. Great Mood.</small></span>
+      </a>
+      <h2 class="h3 mb-1">Log in to {{ SITE_NAME }}</h2>
+      <p class="text-muted-2">Use the email address you registered with.</p>
+
+      {% if form.non_field_errors %}
+        <div class="alert alert-danger small rounded-3">
+          {% for error in form.non_field_errors %}<div>{{ error }}</div>{% endfor %}
+        </div>
+      {% endif %}
+
+      <form method="post" class="mt-4">
+        {% csrf_token %}
+        <div class="mb-3">
+          <label class="form-label" for="{{ form.username.id_for_label }}">{{ form.username.label }}</label>
+          {{ form.username }}
+          {% for error in form.username.errors %}<div class="text-danger small">{{ error }}</div>{% endfor %}
+        </div>
+        <div class="mb-3">
+          <div class="d-flex justify-content-between">
+            <label class="form-label" for="{{ form.password.id_for_label }}">{{ form.password.label }}</label>
+            <a class="small" href="{% url 'accounts:register_customer' %}">Forgot password?</a>
+          </div>
+          <div class="fd-input-icon position-relative">
+            {{ form.password }}
+          </div>
+          {% for error in form.password.errors %}<div class="text-danger small">{{ error }}</div>{% endfor %}
+        </div>
+        <input type="hidden" name="next" value="{{ next }}">
+        <button class="btn btn-brand btn-lg w-100" type="submit"><i class="bi bi-box-arrow-in-right me-2"></i>Log in</button>
+      </form>
+
+      <div class="text-center my-4 text-muted-2 small">New to FOODIES?</div>
+      <div class="row g-2">
+        <div class="col-4"><a class="btn btn-soft w-100 btn-sm" href="{% url 'accounts:register_customer' %}">Customer</a></div>
+        <div class="col-4"><a class="btn btn-soft w-100 btn-sm" href="{% url 'accounts:register_restaurant' %}">Restaurant</a></div>
+        <div class="col-4"><a class="btn btn-soft w-100 btn-sm" href="{% url 'accounts:register_delivery' %}">Rider</a></div>
+      </div>
+
+      <div class="alert alert-light small mt-4 rounded-3">
+        <div class="fw-bold mb-1"><i class="bi bi-info-circle me-1"></i>Demo accounts after running <code>seed_data</code></div>
+        <div>Customer — <code>rahul@foodies.test</code> / <code>Foodies@123</code></div>
+        <div>Restaurant — <code>owner@foodies.test</code> / <code>Foodies@123</code></div>
+        <div>Delivery — <code>rider@foodies.test</code> / <code>Foodies@123</code></div>
+        <div>Admin — <code>admin@foodies.test</code> / <code>Admin@12345</code></div>
+      </div>
+    </div>
+  </main>
+</div>
+{% endblock %}

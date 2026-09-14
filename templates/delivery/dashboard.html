@@ -1,0 +1,160 @@
+{% extends "delivery/base.html" %}
+{% load static foodies_extras %}
+{% block title %}Delivery dashboard — {{ SITE_NAME }}{% endblock %}
+{% block page_heading %}Welcome, Delivery Partner{% endblock %}
+
+{% block content %}
+{% if not profile.is_approved %}
+  <div class="alert alert-warning rounded-3 d-flex gap-3 align-items-start">
+    <i class="bi bi-hourglass-split fs-4"></i>
+    <div>
+      <div class="fw-bold">Your partner account is awaiting FOODIES approval</div>
+      <div class="small">Our admin team reviews new riders before they can accept deliveries. You will be notified once approved.</div>
+    </div>
+  </div>
+{% elif not profile.is_online %}
+  <div class="alert alert-light rounded-3 d-flex gap-3 align-items-center justify-content-between flex-wrap">
+    <div class="d-flex gap-3 align-items-center">
+      <i class="bi bi-toggle-off fs-4"></i>
+      <div><div class="fw-bold">You are offline</div><div class="small">Go online to receive delivery assignments.</div></div>
+    </div>
+    <form method="post" action="{% url 'delivery:toggle_availability' %}">
+      {% csrf_token %}
+      <button class="btn btn-brand btn-sm" type="submit">Go online now</button>
+    </form>
+  </div>
+{% endif %}
+
+<div class="row g-3 mb-4">
+  <div class="col-6 col-xl-3"><div class="fd-stat-card"><div class="fd-stat-icon"><i class="bi bi-calendar-day"></i></div><div class="fd-stat-value">{{ stats.todays_deliveries }}</div><div class="fd-stat-label">Today's deliveries</div></div></div>
+  <div class="col-6 col-xl-3"><div class="fd-stat-card green"><div class="fd-stat-icon"><i class="bi bi-check2-circle"></i></div><div class="fd-stat-value">{{ stats.completed_deliveries }}</div><div class="fd-stat-label">Completed deliveries</div></div></div>
+  <div class="col-6 col-xl-3"><div class="fd-stat-card amber"><div class="fd-stat-icon"><i class="bi bi-hourglass"></i></div><div class="fd-stat-value">{{ stats.pending_deliveries }}</div><div class="fd-stat-label">Pending deliveries</div></div></div>
+  <div class="col-6 col-xl-3"><div class="fd-stat-card violet"><div class="fd-stat-icon"><i class="bi bi-cash-coin"></i></div><div class="fd-stat-value">{{ stats.todays_earnings|inr:0 }}</div><div class="fd-stat-label">Today's earnings</div></div></div>
+</div>
+
+<div class="row g-3 mb-4">
+  <div class="col-6 col-xl-3"><div class="fd-stat-card blue"><div class="fd-stat-icon"><i class="bi bi-calendar-week"></i></div><div class="fd-stat-value">{{ stats.week_earnings|inr:0 }}</div><div class="fd-stat-label">This week</div></div></div>
+  <div class="col-6 col-xl-3"><div class="fd-stat-card"><div class="fd-stat-icon"><i class="bi bi-calendar3"></i></div><div class="fd-stat-value">{{ stats.month_earnings|inr:0 }}</div><div class="fd-stat-label">This month</div></div></div>
+  <div class="col-6 col-xl-3"><div class="fd-stat-card green"><div class="fd-stat-icon"><i class="bi bi-wallet2"></i></div><div class="fd-stat-value">{{ stats.total_earnings|inr:0 }}</div><div class="fd-stat-label">Lifetime earnings</div></div></div>
+  <div class="col-6 col-xl-3"><div class="fd-stat-card amber"><div class="fd-stat-icon"><i class="bi bi-speedometer"></i></div><div class="fd-stat-value">{{ profile.earning_per_delivery|inr:0 }}</div><div class="fd-stat-label">Per delivery payout</div></div></div>
+</div>
+
+<div class="row g-3">
+  <div class="col-lg-7">
+    <div class="fd-card fd-card-body mb-3">
+      <h2 class="h6 fw-bold mb-3">Your active deliveries</h2>
+      {% for order in active_orders %}
+        <div class="border rounded-3 p-3 mb-3">
+          <div class="d-flex justify-content-between flex-wrap gap-2">
+            <div>
+              <div class="fw-bold">#{{ order.order_number }} <span class="fd-badge {{ order.order_status|status_class }}">{{ order.status_label }}</span></div>
+              <div class="small text-muted-2"><i class="bi bi-shop me-1"></i>{{ order.restaurant.name }} — {{ order.restaurant.address }}, {{ order.restaurant.area }}</div>
+              <div class="small text-muted-2"><i class="bi bi-person me-1"></i>{{ order.customer_name }} • {{ order.customer_phone }}</div>
+              <div class="small text-muted-2"><i class="bi bi-geo-alt me-1"></i>{{ order.delivery_address_text }}</div>
+            </div>
+            <div class="text-end">
+              <div class="fw-bold">{{ order.total_amount|inr }}</div>
+              <div class="small text-muted-2">{{ order.get_payment_status_display }}</div>
+              {% if order.assignment %}<div class="small text-muted-2">{{ order.assignment.distance_km }} km • earn {{ order.assignment.earning_amount|inr:0 }}</div>{% endif %}
+            </div>
+          </div>
+          <div class="d-flex gap-2 mt-3 flex-wrap">
+            <a class="btn btn-brand btn-sm" href="{% url 'delivery:order_detail' order.order_number %}"><i class="bi bi-geo me-1"></i>Manage delivery</a>
+            {% if order.order_status == 'ASSIGNED' %}
+              <form method="post" action="{% url 'delivery:update_status' order.order_number 'PICKED_UP' %}">
+                {% csrf_token %}<button class="btn btn-soft btn-sm" type="submit">Mark picked up</button>
+              </form>
+            {% elif order.order_status == 'PICKED_UP' %}
+              <form method="post" action="{% url 'delivery:update_status' order.order_number 'OUT_FOR_DELIVERY' %}">
+                {% csrf_token %}<button class="btn btn-soft btn-sm" type="submit">Out for delivery</button>
+              </form>
+            {% elif order.order_status == 'OUT_FOR_DELIVERY' %}
+              <form method="post" action="{% url 'delivery:update_status' order.order_number 'DELIVERED' %}"
+                    data-confirm="Confirm this order has been delivered?" data-confirm-title="Complete delivery">
+                {% csrf_token %}<button class="btn btn-brand btn-sm" type="submit">Mark delivered</button>
+              </form>
+            {% endif %}
+          </div>
+        </div>
+      {% empty %}
+        <p class="small text-muted-2 mb-0">No active deliveries. {% if profile.is_online %}Check available deliveries below.{% else %}Go online to start receiving orders.{% endif %}</p>
+      {% endfor %}
+    </div>
+
+    <div class="fd-card fd-card-body">
+      <div class="d-flex justify-content-between align-items-center mb-3">
+        <h2 class="h6 fw-bold mb-0">Available deliveries</h2>
+        <a class="small" href="{% url 'delivery:available' %}">See all</a>
+      </div>
+      {% for order in available_orders %}
+        <div class="border rounded-3 p-3 mb-2">
+          <div class="d-flex justify-content-between flex-wrap gap-2">
+            <div>
+              <div class="fw-bold small">#{{ order.order_number }}</div>
+              <div class="small text-muted-2">{{ order.restaurant.name }} • {{ order.restaurant.area }}</div>
+              <div class="small text-muted-2">Deliver to {{ order.delivery_address_text|truncatechars:52 }}</div>
+            </div>
+            <div class="text-end">
+              <div class="fw-bold small">{{ order.total_amount|inr:0 }}</div>
+              <span class="fd-badge fd-badge-ready">Ready</span>
+            </div>
+          </div>
+          <form method="post" action="{% url 'delivery:claim' order.order_number %}" class="mt-2">
+            {% csrf_token %}
+            <button class="btn btn-brand btn-sm w-100" type="submit"><i class="bi bi-hand-index-thumb me-1"></i>Accept delivery</button>
+          </form>
+        </div>
+      {% empty %}
+        <p class="small text-muted-2 mb-0">
+          {% if profile.is_approved and profile.is_online %}No unassigned deliveries right now — stay online, new ones appear instantly.{% else %}Go online to see deliveries available in your area.{% endif %}
+        </p>
+      {% endfor %}
+    </div>
+  </div>
+
+  <div class="col-lg-5">
+    <div class="fd-card fd-card-body mb-3">
+      <h2 class="h6 fw-bold mb-3">Recently completed</h2>
+      {% for order in recent_completed %}
+        <div class="fd-list-row">
+          <span class="fd-avatar"><i class="bi bi-check2"></i></span>
+          <div class="flex-grow-1">
+            <div class="fw-semibold small">#{{ order.order_number }}</div>
+            <div class="text-muted-2" style="font-size:.72rem">{{ order.restaurant.name }} • {{ order.delivered_at|date:"d M, h:i A" }}</div>
+          </div>
+          <span class="fw-bold small">{{ order.total_amount|inr:0 }}</span>
+        </div>
+      {% empty %}
+        <p class="small text-muted-2 mb-0">Completed deliveries will be listed here.</p>
+      {% endfor %}
+    </div>
+
+    <div class="fd-card fd-card-body mb-3">
+      <h2 class="h6 fw-bold mb-3">Notifications</h2>
+      {% for note in notifications %}
+        <div class="fd-list-row">
+          <i class="bi bi-bell text-primary-brand"></i>
+          <div class="flex-grow-1">
+            <div class="fw-semibold small">{{ note.title }}</div>
+            <div class="text-muted-2" style="font-size:.72rem">{{ note.message|truncatechars:60 }}</div>
+            <div class="text-muted-2" style="font-size:.68rem">{{ note.created_at|timesince }} ago</div>
+          </div>
+        </div>
+      {% empty %}
+        <p class="small text-muted-2 mb-0">No new notifications.</p>
+      {% endfor %}
+    </div>
+
+    <div class="fd-card fd-card-body">
+      <h2 class="h6 fw-bold mb-3">Delivery walkthrough</h2>
+      <ul class="fd-tracker mb-0">
+        <li class="done"><span class="fd-track-dot"><i class="bi bi-check-lg"></i></span><div><div class="fw-semibold small">Accept delivery</div><div class="text-muted-2" style="font-size:.72rem">Claim it from the available list</div></div></li>
+        <li class="done"><span class="fd-track-dot"><i class="bi bi-check-lg"></i></span><div><div class="fw-semibold small">Arrive at restaurant</div><div class="text-muted-2" style="font-size:.72rem">Show the order number at the counter</div></div></li>
+        <li class="done"><span class="fd-track-dot"><i class="bi bi-check-lg"></i></span><div><div class="fw-semibold small">Food picked up</div><div class="text-muted-2" style="font-size:.72rem">Update the status in the app</div></div></li>
+        <li class="current"><span class="fd-track-dot"><i class="bi bi-record-circle"></i></span><div><div class="fw-semibold small">Out for delivery</div><div class="text-muted-2" style="font-size:.72rem">Ride safe — the customer is tracking you</div></div></li>
+        <li class="todo"><span class="fd-track-dot"><i class="bi bi-circle"></i></span><div><div class="fw-semibold small">Delivered</div><div class="text-muted-2" style="font-size:.72rem">Earnings are added instantly</div></div></li>
+      </ul>
+    </div>
+  </div>
+</div>
+{% endblock %}
