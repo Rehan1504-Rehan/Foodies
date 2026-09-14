@@ -29,6 +29,13 @@
         </select>
       </div>
       <div class="col-6 col-lg-2">
+        <label class="form-label small" for="cuisine">Cuisine</label>
+        <select class="form-select" id="cuisine" name="cuisine">
+          <option value="">Any cuisine</option>
+          {% for cuisine in cuisines %}<option value="{{ cuisine }}" {% if selected.cuisine|lower == cuisine|lower %}selected{% endif %}>{{ cuisine }}</option>{% endfor %}
+        </select>
+      </div>
+      <div class="col-6 col-lg-2">
         <label class="form-label small" for="rating">Rating</label>
         <select class="form-select" id="rating" name="rating">
           <option value="">Any rating</option>

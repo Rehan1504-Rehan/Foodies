@@ -49,6 +49,17 @@ def home(request):
     return render(request, "customer/home.html", context)
 
 
+def _cuisine_choices():
+    """Distinct cuisines across approved restaurants (from the database)."""
+    seen = {}
+    for value in Restaurant.objects.approved().values_list("cuisine_type", flat=True):
+        for part in (value or "").split(","):
+            name = part.strip()
+            if name:
+                seen.setdefault(name.lower(), name)
+    return sorted(seen.values())
+
+
 def search(request):
     """Search restaurants, dishes and categories using real database filters."""
     query = (request.GET.get("q") or "").strip()
@@ -59,6 +70,7 @@ def search(request):
     max_price = (request.GET.get("max_price") or "").strip()
     max_delivery = (request.GET.get("delivery_time") or "").strip()
     has_offer = request.GET.get("offers") == "on"
+    cuisine = (request.GET.get("cuisine") or "").strip()
     sort = request.GET.get("sort") or "relevance"
 
     restaurants = Restaurant.objects.approved().annotate(
@@ -113,6 +125,9 @@ def search(request):
             restaurants = restaurants.filter(delivery_time__lte=int(max_delivery))
         except (TypeError, ValueError):
             pass
+    if cuisine:
+        restaurants = restaurants.filter(cuisine_type__icontains=cuisine)
+        foods = foods.filter(restaurant__cuisine_type__icontains=cuisine)
     if has_offer:
         now = timezone.now()
         restaurants = restaurants.filter(
@@ -144,8 +159,10 @@ def search(request):
         "foods": foods[:40],
         "categories": Category.objects.filter(is_active=True),
         "cities": Restaurant.objects.approved().values_list("city", flat=True).distinct().order_by("city"),
+        "cuisines": _cuisine_choices(),
         "selected": {
             "city": city,
+            "cuisine": cuisine,
             "category": category_slug,
             "veg": veg_only,
             "rating": min_rating,

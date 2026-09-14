@@ -164,6 +164,29 @@ class PageSmokeTests(TestCase):
             ],
         )
 
+    def test_post_login_redirect_lands_each_role_on_its_own_dashboard(self):
+        expectations = [
+            (self.customer, "/customer/"),
+            (self.owner, "/restaurant-dashboard/"),
+            (self.rider, "/delivery/"),
+            (self.admin, "/admin-dashboard/"),
+        ]
+        for user, expected in expectations:
+            with self.subTest(role=user.role):
+                client = Client()
+                client.force_login(user)
+                response = client.get("/dashboard/")
+                self.assertEqual(response.status_code, 302)
+                self.assertEqual(response.url, expected)
+
+    def test_login_form_redirects_by_role(self):
+        client = Client()
+        response = client.post(
+            "/accounts/login/", {"username": self.rider.email, "password": PASSWORD}
+        )
+        self.assertEqual(response.status_code, 302)
+        self.assertEqual(response.url, "/delivery/")
+
     def test_django_admin_keeps_its_own_interface(self):
         """The custom FOODIES console must not shadow Django's admin templates."""
         client = Client()

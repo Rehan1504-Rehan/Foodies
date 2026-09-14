@@ -52,11 +52,12 @@ class IsAdminRole(HasRole):
     allowed_roles = ("ADMIN",)
 
 
+#: Where each role lands after logging in ("dashboard:redirect" resolves this).
 ROLE_HOME = {
     "ADMIN": "dashboard:admin_home",
     "CUSTOMER": "dashboard:customer_home",
     "RESTAURANT_OWNER": "dashboard:restaurant_home",
-    "DELIVERY_BOY": "dashboard:delivery_home",
+    "DELIVERY_BOY": "delivery:dashboard",
 }
 
 

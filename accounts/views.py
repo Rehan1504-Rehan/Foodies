@@ -65,7 +65,7 @@ def register(request, role="customer"):
     config = {
         "customer": (CustomerRegisterForm, "CUSTOMER", "dashboard:customer_home", "Customer"),
         "restaurant": (RestaurantOwnerRegisterForm, "RESTAURANT_OWNER", "dashboard:restaurant_home", "Restaurant Owner"),
-        "delivery": (DeliveryRegisterForm, "DELIVERY_BOY", "dashboard:delivery_home", "Delivery Partner"),
+        "delivery": (DeliveryRegisterForm, "DELIVERY_BOY", "delivery:dashboard", "Delivery Partner"),
     }
     if role not in config:
         messages.error(request, "Unknown account type.")
