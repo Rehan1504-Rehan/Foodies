@@ -13,6 +13,9 @@ Django + DRF backend and one relational database.
 </div>
 
 ---
+## Live site 
+- https://foodies-68y6.onrender.com
+- The site is live but if render black interface comes please wait for 2 minutes for render to activate site.
 
 ## ✨ What is inside
 
